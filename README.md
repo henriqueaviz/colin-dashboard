@@ -10,10 +10,10 @@ Colin é um assistente de gestão rural que atende via chat (WhatsApp e web). El
 
 | Fazenda | Casos | Aprovação |
 |---|---|---|
-| Jaçanã | 84 | 87% |
-| WS | 78 | 88% |
-| Apoloni | 69 | 81% |
-| Piccini | 71 | 72% |
+| Jaçanã | 94 | 83% |
+| WS | 88 | 85% |
+| Apoloni | 79 | 78% |
+| Piccini | 81 | 58% |
 
 ## Framework de testes — 3 Níveis
 
@@ -25,7 +25,7 @@ Os testes seguem um framework de três níveis de complexidade crescente:
 | **N2** | Contexto Operacional | Colin consegue resumir e contextualizar a operação? |
 | **N3** | Diagnóstico Operacional | Colin explica causas, identifica problemas e antecipa riscos? |
 
-Cada nível contém 10 perguntas de mecanização por fazenda, testadas com foco no mês corrente.
+Cada nível contém 10 perguntas de mecanização por fazenda, testadas com foco no mês corrente. Uma bateria extra de 10 perguntas mensais adicionais (**N1 Extra**) foi executada para ampliar a cobertura do N1 com ângulos diferentes.
 
 ## Suites de teste
 
@@ -35,7 +35,8 @@ Além dos níveis de mecanização, o dashboard cobre:
 - **Perguntas Fundamentais** — safra, produtividade, custos, receita
 - **Continuidade de Conversa** — comportamento em sessões multi-turn
 - **Sinalização de Ausência** — Colin sinaliza ausência sem inventar dados
-- **Regressão GPT** — comparativo entre versões de modelo (GPT-5.4 → 4.1)
+- **N1 Extra — Foco Mensal** — 10 perguntas adicionais de N1 com ângulos diferentes (consumo, disponibilidade, pico de atividade, manutenção corretiva)
+- **Regressão GPT** — comparativo entre versões de modelo (GPT-5.4 → 4.1-mini)
 - **Rentabilidade por Talhão** — análise por talhão específico
 - **Segurança** — rejeição de prompts fora do escopo agro
 
@@ -55,8 +56,9 @@ Matriz de views de dados por fazenda — indica se aquela fonte existe e está f
 
 ## Status atual
 
-- **Última execução:** 17/07/2026 às 10:50
-- **N1:** Validado
+- **Última execução:** 20/07/2026 às 11:00
+- **Modelo testado:** GPT-4.1-mini (branch Michael)
+- **N1:** Validado (20 perguntas por fazenda — original + extra)
 - **N2:** Em progresso
 - **N3:** Em validação
 
@@ -68,6 +70,8 @@ Matriz de views de dados por fazenda — indica se aquela fonte existe e está f
 | BUG-02 | Saldo operacional retorna safra errada (regressão pós 03/07) |
 | BUG-03 | Lista de máquinas truncada silenciosamente — Apoloni |
 | BUG-08 | Inconsistência de produtividade Soja 2025 — Jaçanã |
+| BUG-11 | JAC N1-10 — Query de manutenção trava acima de 300s |
+| BUG-12 | Queries de agregação mensal lentas na WS e Apoloni (50–208s) |
 
 ## Visualizar
 
