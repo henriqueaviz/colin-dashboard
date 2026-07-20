@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Colin QA — Dashboard</title>
+<style>
+:root {
+  --ground:       #0E1710;
+  --surface:      #182419;
+  --card:         #1E2E1F;
+  --card-raised:  #253325;
+  --border:       #2A3D2C;
+  --border-light: #344D36;
+  --txt-primary:  #D8EDD8;
+  --txt-secondary:#8BB08B;
+  --txt-muted:    #567056;
+  --pass:         #52BD72;
+  --pass-dim:     #2A5C38;
+  --warn:         #DBA033;
+  --warn-dim:     #5C3E0E;
+  --fail:         #C94B35;
+  --fail-dim:     #521C12;
+  --info:         #4A9ECC;
+  --info-dim:     #1A3A5C;
+  --font-data: "Consolas","Cascadia Code","SF Mono","Menlo",monospace;
+  --font-ui:   -apple-system,"Segoe UI","Ubuntu",sans-serif;
+  --r: 3px;
+}
+@media (prefers-color-scheme: light) {
+  :root {
+    --ground:#EDF4EC; --surface:#FFFFFF; --card:#FFFFFF; --card-raised:#F2F8F1;
+    --border:#C8DCC8; --border-light:#DAEADA;
+    --txt-primary:#0F1F10; --txt-secondary:#3D6B3E; --txt-muted:#7A9A7A;
+    --pass-dim:#D4F0DD; --warn-dim:#FBF0D8; --fail-dim:#FAE0DB; --info-dim:#DBF0FF; --info:#1A6A99;
+  }
+}
+:root[data-theme="dark"] {
+  --ground:#0E1710; --surface:#182419; --card:#1E2E1F; --card-raised:#253325;
+  --border:#2A3D2C; --border-light:#344D36;
+  --txt-primary:#D8EDD8; --txt-secondary:#8BB08B; --txt-muted:#567056;
+  --pass-dim:#2A5C38; --warn-dim:#5C3E0E; --fail-dim:#521C12; --info-dim:#1A3A5C; --info:#4A9ECC;
+}
+:root[data-theme="light"] {
+  --ground:#EDF4EC; --surface:#FFFFFF; --card:#FFFFFF; --card-raised:#F2F8F1;
+  --border:#C8DCC8; --border-light:#DAEADA;
+  --txt-primary:#0F1F10; --txt-secondary:#3D6B3E; --txt-muted:#7A9A7A;
+  --pass-dim:#D4F0DD; --warn-dim:#FBF0D8; --fail-dim:#FAE0DB; --info-dim:#DBF0FF; --info:#1A6A99;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--ground);color:var(--txt-primary);font-family:var(--font-ui);font-size:14px;line-height:1.5;min-height:100vh;display:flex;flex-direction:column;}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:0.01ms!important;transition-duration:0.01ms!important;}}
+/* ── header ── */
+.header{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 24px;flex:0 0 auto;}
+.header-inner{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;}
+.brand{display:flex;flex-direction:column;gap:2px;}
+.brand-name{font-family:var(--font-data);font-size:13px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:#6EC653;}
+.brand-sub{font-size:11px;color:var(--txt-muted);letter-spacing:0.03em;}
+.header-right{display:flex;align-items:center;gap:28px;flex-wrap:wrap;}
+.stat-item{display:flex;flex-direction:column;gap:1px;align-items:flex-end;}
+.stat-label{font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:var(--txt-muted);}
+.stat-value{font-family:var(--font-data);font-variant-numeric:tabular-nums;font-size:13px;font-weight:600;color:var(--txt-secondary);}
+.stat-value.big{font-size:20px;color:var(--txt-primary);line-height:1;}
+.stat-value.pass{color:var(--pass);} .stat-value.warn{color:var(--warn);} .stat-value.fail{color:var(--fail);}
+/* ── nav tabs ── */
+.nav{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;display:flex;gap:0;flex:0 0 auto;}
+.nav-tab{background:none;border:none;border-bottom:2px solid transparent;color:var(--txt-muted);cursor:pointer;font-family:var(--font-ui);font-size:12px;font-weight:600;letter-spacing:0.04em;padding:10px 16px;text-transform:uppercase;transition:color 0.15s,border-color 0.15s;white-space:nowrap;}
+.nav-tab:hover{color:var(--txt-secondary);}
+.nav-tab.active{color:var(--pass);border-bottom-color:var(--pass);}
+.nav-tab:focus-visible{outline:2px solid #6EC653;outline-offset:-2px;}
+.theme-btn{background:var(--card-raised);border:1px solid var(--border);border-radius:var(--r);color:var(--txt-muted);cursor:pointer;font-family:var(--font-ui);font-size:11px;letter-spacing:0.06em;padding:4px 10px;text-transform:uppercase;transition:color 0.15s,border-color 0.15s;}
+.theme-btn:hover{color:var(--txt-primary);border-color:var(--border-light);}
+.theme-btn:focus-visible{outline:2px solid #6EC653;outline-offset:2px;}
+/* ── pages ── */
+.page{display:none;padding:24px;flex-direction:column;gap:24px;max-width:1200px;margin:0 auto;width:100%;}
+.page.active{display:flex;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+.page.active{animation:fadeUp 0.22s ease both;}
+/* ── farms grid ── */
+.farms-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;}
+@media(max-width:700px){.farms-grid{grid-template-columns:1fr;}}
+/* ── farm card v2 ── */
+.fc-card{background:var(--card);border:1px solid var(--border);border-radius:6px;overflow:hidden;display:flex;flex-direction:column;}
+.fc-header{display:flex;align-items:center;justify-content:space-between;padding:18px 20px 14px;border-bottom:1px solid var(--border);position:relative;}
+.fc-header::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;}
+.fc-header.fc-pass::before{background:var(--pass);}
+.fc-header.fc-warn::before{background:var(--warn);}
+.fc-header.fc-fail::before{background:var(--fail);}
+.fc-name{font-size:15px;font-weight:700;color:var(--txt-primary);letter-spacing:-0.01em;}
+.fc-badge{display:flex;flex-direction:column;align-items:flex-end;gap:1px;}
+.fc-score{font-family:var(--font-data);font-size:22px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums;}
+.fc-score.pass{color:var(--pass);} .fc-score.warn{color:var(--warn);} .fc-score.fail{color:var(--fail);}
+.fc-total{font-size:10px;color:var(--txt-muted);font-family:var(--font-data);}
+.fc-body{padding:16px 20px;display:flex;flex-direction:column;gap:12px;}
+.fcat-row{display:grid;grid-template-columns:96px 1fr 34px;align-items:center;gap:10px;}
+.fcat-label{font-size:11px;color:var(--txt-secondary);}
+.fcat-bar{height:3px;background:var(--border);border-radius:2px;overflow:hidden;}
+.fcat-fill{height:100%;border-radius:2px;}
+.fcat-fill.pass{background:var(--pass);} .fcat-fill.warn{background:var(--warn);} .fcat-fill.fail{background:var(--fail);}
+.fcat-pct{font-family:var(--font-data);font-size:11px;font-variant-numeric:tabular-nums;text-align:right;}
+.fcat-pct.pass{color:var(--pass);} .fcat-pct.warn{color:var(--warn);} .fcat-pct.fail{color:var(--fail);}
+.fcat-na{color:var(--txt-muted);font-family:var(--font-data);font-size:11px;}
+/* ── level stepper ── */
+.fc-stepper{display:flex;align-items:flex-start;gap:0;}
+.fc-step{display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;}
+.fc-step-node{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;letter-spacing:0.03em;border:2px solid transparent;position:relative;z-index:1;}
+.fc-step-node.sn-done{background:var(--pass-dim);border-color:var(--pass);color:var(--pass);}
+.fc-step-node.sn-progress{background:var(--warn-dim);border-color:var(--warn);color:var(--warn);border-style:dashed;}
+.fc-step-node.sn-review{background:var(--info-dim);border-color:var(--info);color:var(--info);border-style:dashed;}
+.fc-step-lbl{font-size:9px;letter-spacing:0.05em;font-weight:600;text-align:center;}
+.fc-step-lbl.sn-done{color:var(--pass);}
+.fc-step-lbl.sn-progress{color:var(--warn);}
+.fc-step-lbl.sn-review{color:var(--info);}
+.fc-connector{flex:1;height:2px;margin-top:14px;}
+.fc-connector.cn-done{background:var(--pass);}
+.fc-connector.cn-progress{background:repeating-linear-gradient(90deg,var(--warn) 0,var(--warn) 5px,transparent 5px,transparent 10px);}
+.fc-stepper-wrap{padding:10px 20px 12px;border-bottom:1px solid var(--border);}
+.fc-stepper-title{font-size:9px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--txt-muted);margin-bottom:10px;}
+/* ── tables ── */
+.table-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-family:var(--font-data);font-size:12px;font-variant-numeric:tabular-nums;}
+thead th{background:var(--surface);border:1px solid var(--border);color:var(--txt-muted);font-family:var(--font-ui);font-size:10px;font-weight:700;letter-spacing:0.1em;padding:7px 12px;text-align:left;text-transform:uppercase;white-space:nowrap;}
+thead th:first-child{border-left:none;} thead th:last-child{border-right:none;}
+tbody tr{border-bottom:1px solid var(--border);} tbody tr:last-child{border-bottom:none;}
+tbody td{background:var(--card);border-right:1px solid var(--border);padding:8px 12px;color:var(--txt-secondary);vertical-align:middle;}
+tbody td:last-child{border-right:none;}
+tbody td:first-child{color:var(--txt-primary);font-family:var(--font-ui);font-size:12px;font-weight:600;}
+/* ── chips ── */
+.cell-chip{display:inline-flex;align-items:center;gap:5px;border-radius:2px;padding:2px 7px;font-size:11px;white-space:nowrap;}
+.chip-pass{background:var(--pass-dim);color:var(--pass);} .chip-warn{background:var(--warn-dim);color:var(--warn);}
+.chip-fail{background:var(--fail-dim);color:var(--fail);} .chip-na{background:var(--card-raised);color:var(--txt-muted);}
+.chip-na-hard{background:var(--border);color:var(--txt-muted);text-decoration:line-through;}
+.chip-info{background:var(--info-dim);color:var(--info);}
+.chip-ghost{background:transparent;color:var(--txt-muted);border:1px solid var(--border);padding:1px 6px;}
+.chip-dot{width:5px;height:5px;border-radius:50%;flex:0 0 auto;}
+.chip-pass .chip-dot{background:var(--pass);} .chip-warn .chip-dot{background:var(--warn);}
+.chip-fail .chip-dot{background:var(--fail);} .chip-info .chip-dot{background:var(--info);}
+/* ── coverage ── */
+.cov-note{font-size:10px;color:var(--txt-muted);margin-top:3px;line-height:1.3;font-style:italic;}
+.cov-cell{display:flex;flex-direction:column;gap:0;}
+.legend-row{display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;}
+/* ── níveis colin ── */
+.nivel-section{margin-bottom:28px;}
+.nivel-header{display:flex;align-items:baseline;gap:10px;margin-bottom:10px;padding-bottom:8px;border-bottom:2px solid var(--border);}
+.nivel-badge{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;font-size:13px;font-weight:800;flex-shrink:0;}
+.nivel-badge-1{background:color-mix(in srgb,var(--pass) 18%,transparent);color:var(--pass);}
+.nivel-badge-2{background:color-mix(in srgb,var(--warn) 18%,transparent);color:var(--warn);}
+.nivel-badge-3{background:color-mix(in srgb,#a78bfa 18%,transparent);color:#a78bfa;}
+.nivel-title-wrap{display:flex;flex-direction:column;gap:1px;}
+.nivel-title{font-size:12px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--txt-primary);}
+.nivel-subtitle{font-size:11px;color:var(--txt-muted);}
+.nivel-avalia{display:flex;gap:6px;flex-wrap:wrap;margin-left:auto;}
+.nivel-tag{font-size:10px;padding:2px 7px;border-radius:10px;background:var(--card-raised);color:var(--txt-muted);}
+.nivel-table{width:100%;border-collapse:collapse;font-size:12px;}
+.nivel-table th{text-align:left;padding:5px 8px;font-size:10px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:var(--txt-muted);border-bottom:1px solid var(--border);}
+.nivel-table th.farm-th{text-align:center;min-width:80px;}
+.nivel-table td{padding:6px 8px;border-bottom:1px solid var(--border);vertical-align:middle;}
+.nivel-table tr:last-child td{border-bottom:none;}
+.nivel-table tr:hover td{background:var(--card-raised);}
+.nivel-table td.farm-td{text-align:center;}
+.nivel-id{font-size:10px;color:var(--txt-muted);font-variant-numeric:tabular-nums;white-space:nowrap;}
+/* farm level summary bar */
+.farm-level-bar{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:24px;}
+.farm-level-card{flex:1;min-width:140px;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;}
+.farm-level-name{font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--txt-secondary);}
+.farm-level-dots{display:flex;gap:6px;align-items:center;}
+.farm-level-dot{width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;}
+.farm-level-dot.reached{opacity:1;}
+.farm-level-dot.partial{opacity:0.6;}
+.farm-level-dot.missing{background:var(--card-raised)!important;color:var(--txt-muted);}
+.farm-level-label{font-size:10px;color:var(--txt-muted);}
+.nivel-section-title{font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--txt-secondary);margin:24px 0 14px;}
+.cov-farm-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:20px;}
+@media(max-width:860px){.cov-farm-grid{grid-template-columns:1fr;}}
+.cov-farm-block{display:flex;flex-direction:column;gap:8px;}
+.cov-farm-title{font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--txt-secondary);padding-bottom:6px;border-bottom:2px solid var(--pass);}
+.cov-farm-table{width:100%;border-collapse:collapse;font-size:12px;}
+.cov-farm-table th{text-align:left;padding:6px 8px;font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--txt-muted);border-bottom:1px solid var(--border);}
+.cov-farm-table td{padding:6px 8px;border-bottom:1px solid var(--border);vertical-align:top;}
+.cov-farm-table tr:last-child td{border-bottom:none;}
+.cov-farm-table tr:hover td{background:var(--card-raised);}
+.legend-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--txt-muted);}
+/* ── bugs ── */
+.bugs-list{display:flex;flex-direction:column;gap:2px;}
+.bug-row{background:var(--card);border:1px solid var(--border);border-radius:var(--r);display:grid;grid-template-columns:6px 80px 1fr;overflow:hidden;}
+.bug-sev-bar{height:100%;} .bug-sev-bar.high{background:var(--fail);} .bug-sev-bar.med{background:var(--warn);}
+.bug-id{font-family:var(--font-data);font-size:10px;color:var(--txt-muted);letter-spacing:0.08em;padding:11px 8px 10px 12px;}
+.bug-body{padding:10px 14px 10px 0;}
+.bug-title{font-size:12px;font-weight:600;color:var(--txt-primary);margin-bottom:2px;}
+.bug-detail{font-size:11px;color:var(--txt-secondary);line-height:1.4;}
+/* ── comp note ── */
+.comp-note{background:var(--warn-dim);border:1px solid var(--warn);border-radius:var(--r);padding:10px 14px;display:flex;align-items:center;gap:10px;}
+.comp-note-icon{width:16px;height:16px;flex:0 0 auto;color:var(--warn);}
+.comp-note-text{font-size:12px;color:var(--warn);line-height:1.4;}
+.comp-note-text strong{font-weight:700;}
+/* ── page heading ── */
+.page-title{font-size:10px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--txt-muted);padding-bottom:12px;border-bottom:1px solid var(--border);}
+/* ── pillars ── */
+.pillar-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:32px;}
+@media(max-width:700px){.pillar-grid{grid-template-columns:repeat(2,1fr);}}
+.pillar-card{background:var(--card);border:1px solid var(--border);border-radius:4px;padding:20px 18px 16px;display:flex;flex-direction:column;gap:10px;position:relative;overflow:hidden;}
+.pillar-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
+.pillar-card.p-pass::before{background:var(--pass);}
+.pillar-card.p-warn::before{background:var(--warn);}
+.pillar-card.p-fail::before{background:var(--fail);}
+.pillar-icon{font-size:18px;line-height:1;}
+.pillar-label{font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--txt-muted);}
+.pillar-pct{font-family:var(--font-data);font-size:28px;font-weight:700;letter-spacing:-0.02em;line-height:1;}
+.pillar-pct.p-pass{color:var(--pass);}
+.pillar-pct.p-warn{color:var(--warn);}
+.pillar-pct.p-fail{color:var(--fail);}
+.pillar-sub{font-size:10px;color:var(--txt-muted);}
+.farm-pillar-table{width:100%;border-collapse:collapse;}
+.farm-pillar-table th{font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--txt-muted);padding:6px 12px;text-align:left;border-bottom:2px solid var(--border);}
+.farm-pillar-table th:not(:first-child){text-align:center;}
+.farm-pillar-table td{padding:12px 12px;border-bottom:1px solid var(--border);font-size:12px;color:var(--txt-secondary);vertical-align:middle;}
+.farm-pillar-table tr:last-child td{border-bottom:none;}
+.farm-pillar-table tr:hover td{background:var(--card-raised);}
+.farm-pillar-table td:first-child{font-weight:700;color:var(--txt-primary);font-size:13px;}
+.farm-pillar-table td:not(:first-child){text-align:center;}
+.pbar-wrap{display:inline-flex;flex-direction:column;align-items:center;gap:3px;min-width:64px;}
+.pbar-track{width:56px;height:3px;background:var(--border);border-radius:2px;overflow:hidden;}
+.pbar-fill{height:100%;border-radius:2px;}
+.pbar-fill.p-pass{background:var(--pass);}
+.pbar-fill.p-warn{background:var(--warn);}
+.pbar-fill.p-fail{background:var(--fail);}
+.pbar-num{font-family:var(--font-data);font-size:13px;font-variant-numeric:tabular-nums;}
+/* ── footer ── */
+.footer{border-top:1px solid var(--border);padding:12px 24px;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-top:auto;}
+.footer-note{font-size:11px;color:var(--txt-muted);}
+.footer-legend{display:flex;gap:16px;align-items:center;flex-wrap:wrap;}
+.legend-dot{width:8px;height:8px;border-radius:50%;flex:0 0 auto;}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-inner">
+    <div class="brand">
+      <span class="brand-name">Colin QA</span>
+      <span class="brand-sub">Acompanhamento de testes por fazenda</span>
+    </div>
+    <div class="header-right">
+      <div class="stat-item">
+        <span class="stat-label">Data dos testes</span>
+        <span class="stat-value" id="last-run">—</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">Horário</span>
+        <span class="stat-value" id="last-run-time">—</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">Casos avaliados</span>
+        <span class="stat-value" id="total-cases">—</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">Aprovação geral</span>
+        <span class="stat-value big" id="overall-pct">—</span>
+      </div>
+      <button class="theme-btn" id="theme-toggle">&#127763; Tema</button>
+    </div>
+  </div>
+</header>
+
+<nav class="nav" role="tablist" aria-label="Seções do dashboard">
+  <button class="nav-tab active" role="tab" aria-selected="true"  aria-controls="page-farms"    data-page="farms">Aprovação por fazenda</button>
+  <button class="nav-tab"        role="tab" aria-selected="false" aria-controls="page-suites"   data-page="suites">Resultados por suíte</button>
+  <button class="nav-tab"        role="tab" aria-selected="false" aria-controls="page-coverage" data-page="coverage">Cobertura de dados</button>
+  <button class="nav-tab"        role="tab" aria-selected="false" aria-controls="page-periods"  data-page="periods">Cobertura por período</button>
+</nav>
+
+<!-- ── PÁGINA 1: APROVAÇÃO POR FAZENDA ───────────────────────────── -->
+<div class="page active" id="page-farms" role="tabpanel" aria-labelledby="tab-farms">
+  <div class="farms-grid" id="farms-grid"></div>
+</div>
+
+<!-- ── PÁGINA 2: RESULTADOS POR SUÍTE ────────────────────────────── -->
+<div class="page" id="page-suites" role="tabpanel" aria-labelledby="tab-suites">
+  <div id="pillar-view"></div>
+</div>
+
+<!-- ── PÁGINA 4: COBERTURA POR PERÍODO ───────────────────────────── -->
+<div class="page" id="page-periods" role="tabpanel">
+  <div id="periods-content"></div>
+</div>
+
+<!-- ── PÁGINA 3: COBERTURA DE DADOS ─────────────────────────────── -->
+<div class="page" id="page-coverage" role="tabpanel" aria-labelledby="tab-coverage">
+  <div class="legend-row" style="margin-bottom:16px">
+    <div class="legend-item"><span class="cell-chip chip-pass"  style="padding:1px 6px;font-size:10px">Colin responde</span></div>
+    <div class="legend-item"><span class="cell-chip chip-warn"  style="padding:1px 6px;font-size:10px">Resposta parcial</span></div>
+    <div class="legend-item"><span class="cell-chip chip-info"  style="padding:1px 6px;font-size:10px">Em implantação</span></div>
+    <div class="legend-item"><span class="cell-chip chip-na"      style="padding:1px 6px;font-size:10px">Não possui dado</span></div>
+    <div class="legend-item"><span class="cell-chip chip-na-hard" style="padding:1px 6px;font-size:10px">Indisponível</span></div>
+    <div class="legend-item"><span class="cell-chip chip-ghost"   style="font-size:10px">Sem informação</span></div>
+  </div>
+
+  <!-- Nível Colin por fazenda -->
+  <div id="farm-level-bar"></div>
+  <div id="nivel-sections"></div>
+
+  <div class="nivel-section-title">Cobertura de Dados Agrícolas</div>
+  <div id="coverage-farm-grid"></div>
+</div>
+
+<footer class="footer">
+  <span class="footer-note">Colin v2 · API REST · Avaliação automática via Claude</span>
+  <div class="footer-legend">
+    <div class="legend-item"><div class="legend-dot" style="background:var(--pass)"></div>&#8805; 80% aprovado</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--warn)"></div>60–79% atenção</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--fail)"></div>&lt; 60% crítico</div>
+  </div>
+</footer>
+
+<script>
+const DASHBOARD_DATA = {"lastRun":"17/07/2026","lastRunTime":"10:50","farms":[{"id":"jacana","name":"Jaçanã","passed":73,"total":84,"suites":[{"name":"Casos Críticos","passed":5,"total":5},{"name":"Continuidade de Conversa","passed":5,"total":6},{"name":"Frota e Máquinas","passed":2,"total":2},{"name":"Nível 1 — Consulta","passed":10,"total":10},{"name":"Nível 2 — Contexto Operacional","passed":8,"total":10},{"name":"Nível 3 — Diagnóstico Operacional","passed":8,"total":10},{"name":"Perguntas Fundamentais","passed":15,"total":15},{"name":"Rentabilidade por Talhão","passed":8,"total":11},{"name":"Regressão GPT 5.4→4.1","passed":2,"total":4},{"name":"Sinalização de Ausência","passed":5,"total":5},{"name":"Níveis por Período","passed":2,"total":3},{"name":"Segurança","passed":3,"total":3}]},{"id":"ws","name":"WS","passed":69,"total":78,"suites":[{"name":"Casos Críticos","passed":5,"total":5},{"name":"Continuidade de Conversa","passed":5,"total":6},{"name":"Frota e Máquinas","passed":2,"total":2},{"name":"Nível 1 — Consulta","passed":10,"total":10},{"name":"Nível 2 — Contexto Operacional","passed":9,"total":10},{"name":"Nível 3 — Diagnóstico Operacional","passed":9,"total":10},{"name":"Perguntas Fundamentais","passed":14,"total":15},{"name":"Regressão GPT 5.4→4.1","passed":5,"total":9},{"name":"Sinalização de Ausência","passed":4,"total":5},{"name":"Níveis por Período","passed":3,"total":3},{"name":"Segurança","passed":3,"total":3}]},{"id":"apoloni","name":"Apoloni","passed":56,"total":69,"suites":[{"name":"Casos Críticos","passed":5,"total":5},{"name":"Frota e Máquinas","passed":1,"total":2},{"name":"Nível 1 — Consulta","passed":7,"total":10},{"name":"Nível 2 — Contexto Operacional","passed":7,"total":10},{"name":"Nível 3 — Diagnóstico Operacional","passed":9,"total":10},{"name":"Perguntas Fundamentais","passed":15,"total":15},{"name":"Regressão GPT 5.4→4.1","passed":4,"total":6},{"name":"Sinalização de Ausência","passed":4,"total":5},{"name":"Níveis por Período","passed":1,"total":3},{"name":"Segurança","passed":3,"total":3}]},{"id":"piccini","name":"Piccini","passed":51,"total":71,"suites":[{"name":"Casos Críticos","passed":3,"total":5},{"name":"Frota e Máquinas","passed":2,"total":2},{"name":"Nível 1 — Consulta","passed":9,"total":10},{"name":"Nível 2 — Contexto Operacional","passed":6,"total":10},{"name":"Nível 3 — Diagnóstico Operacional","passed":8,"total":10},{"name":"Perguntas Fundamentais","passed":14,"total":15},{"name":"Regressão GPT 5.4→4.1","passed":6,"total":8},{"name":"Sinalização de Ausência","passed":1,"total":5},{"name":"Níveis por Período","passed":0,"total":3},{"name":"Segurança","passed":2,"total":3}]},{"id":"colin","name":"Colin","passed":7,"total":10,"suites":[{"name":"Persona e Escopo","passed":2,"total":5},{"name":"Persona e Segurança","passed":5,"total":5}]}],"bugs":[{"sev":"high","id":"BUG-01","title":"Contaminação de contexto (multi-turn)","detail":"Resposta da pergunta anterior contamina a seguinte em sessões sequenciais. Confirmado em JAC-15 e N2-05."},{"sev":"high","id":"BUG-02","title":"Saldo operacional previsto — safra errada","detail":"Colin retorna SOJA 23/24 (R$3.312.404) em vez de SOJA 24/25 (R$1.480.422). Regressão introduzida após deploy de 03/07."},{"sev":"high","id":"BUG-03","title":"Lista de máquinas truncada — Apoloni","detail":"Colin lista 6–8 máquinas de um total de 15+ cadastradas. Truncamento silencioso sem aviso ao usuário."},{"sev":"med","id":"BUG-04","title":"Agrupamento por tipo intermitente — Apoloni","detail":"Contagens por tipo (Colheitadeira/Pulverizador/Trator) aparecem em alguns retornos e somem em outros sem mudança de prompt."},{"sev":"med","id":"BUG-05","title":"Máquinas / produtividade intermitentes — Piccini","detail":"PIC-01 retornou '0 máquinas' na execução de 06/07; PIC-02 negou produtividade (113 sc/ha) que consta no sistema."},{"sev":"med","id":"BUG-06","title":"Testes SEC: 4/5 bloqueados por WAF (403)","detail":"SEC-01/03/04/05 retornaram HTTP 403 antes de chegar ao Colin — bloqueio no gateway. Comportamento correto de segurança, mas impede validar a resposta do próprio modelo para esses prompts. SEC-02 (receita culinária) chegou ao Colin e foi recusado corretamente."},{"sev":"med","id":"BUG-07","title":"Regressão de escopo — N3-JAC-07 recusou pergunta válida","detail":"Pergunta 'Existe algum componente apresentando desgaste recorrente?' foi tratada como fora de escopo e respondida com redirecionamento de agro. É uma pergunta válida de telemetria. O teste passou por critérios vazios, mas o comportamento é incorreto."},{"sev":"high","id":"BUG-08","title":"Inconsistência JAC — Soja 2025 produtividade","detail":"Em diferentes execuções retornou 73,184 sc/ha (correto) e '0 sacas / 0 área' (errado). Mesmo prompt, mesmo tenant. Provável race condition no período de consulta ou nome de safra não normalizado."},{"sev":"med","id":"BUG-09","title":"Inconsistência WS — Produtividade 2024 divergente","detail":"Retornou 76,45 sc/ha em uma execução e 108,48 sc/ha em outra para a mesma safra 2024. Provável diferença no recorte (só milho vs combinado). Colin não esclarece qual recorte está usando."},{"sev":"med","id":"BUG-10","title":"Piccini — Bitcoin tratado como commodity ausente","detail":"Pergunta sobre Bitcoin foi respondida como 'cotação indisponível na fonte' em vez de recusa de escopo. Colin deveria rejeitar perguntas fora de agro, não tentar consultar e sinalizar ausência."}],"coverage":{"farms":["Jaçanã","WS","Apoloni","Piccini"],"rows":[{"dim":"Safra","fonte":"v_safra_historico","suite":"Perguntas Fundamentais / Casos Críticos","status":{"Jaçanã":"confirmado","WS":"confirmado","Apoloni":"confirmado","Piccini":"confirmado"},"notes":{"Apoloni":"Venda R$ 8.847k, custo R$ 383k, ROI 95% (2025) confirmados","Piccini":"1.550,69 ha colhidos — Milho 06/2025 e 07/2025"}},{"dim":"Colheita / Produtividade","fonte":"v_colheita_historico","suite":"Perguntas Fundamentais / Casos Críticos","status":{"Jaçanã":"confirmado","WS":"confirmado","Apoloni":"parcial","Piccini":"parcial"},"notes":{"Apoloni":"Produtividade sc/ha confirmada (105,94 milho / 75,22 soja), ha colhidos indisponível","Piccini":"Ha colhidos confirmado (1.550,69 ha), sc/ha indisponível"}},{"dim":"Plantação","fonte":"v_plantio_historico","suite":"Perguntas Fundamentais","status":{"Jaçanã":"confirmado","WS":"confirmado","Apoloni":"confirmado","Piccini":"sem-dado"},"notes":{"Jaçanã":"2.999,88 ha plantados em 2025 confirmado","Apoloni":"18.256,57 ha — MILHO 26/26 confirmado","Piccini":"Área plantada não disponível — Colin sinaliza ausência"}},{"dim":"Aplicação / Insumos","fonte":"v_aplicacao_insumos","suite":"Análise Avançada / Sinalização de Ausência","status":{"Jaçanã":"confirmado","WS":"confirmado","Apoloni":"confirmado","Piccini":"confirmado"},"notes":{"Jaçanã":"25.891 aplicações / 437 produtos em 2025","WS":"594 aplicações / 5 grupos em 2025","Apoloni":"2.668 aplicações em 2025","Piccini":"1.532 aplicações / 23 produtos em 2025"}},{"dim":"Vendas / Receita","fonte":"v_vendas_receita","suite":"Perguntas Fundamentais / Casos Críticos","status":{"Jaçanã":"confirmado","WS":"confirmado","Apoloni":"confirmado","Piccini":"sem-dado"},"notes":{"Apoloni":"R$ 8.847.088,07 em 2025 confirmado","Piccini":"R$ 0,00 — sem registros financeiros cadastrados"}},{"dim":"Custo","fonte":"v_custo_safra","suite":"Perguntas Fundamentais / Casos Críticos / Rentabilidade","status":{"Jaçanã":"confirmado","WS":"confirmado","Apoloni":"confirmado","Piccini":"sem-dado"},"notes":{"WS":"R$ 19.173.037,18 (2025) confirmado","Apoloni":"R$ 135.176.832,15 (2025) confirmado","Piccini":"Sem lançamento de custo — Colin sinaliza ausência"}},{"dim":"Rentabilidade / Margem","fonte":"rentabilidade_full_view","suite":"Perguntas Fundamentais / Rentabilidade por Talhão","status":{"Jaçanã":"confirmado","WS":"confirmado","Apoloni":"confirmado","Piccini":"sem-dado"},"notes":{"Jaçanã":"Margem 2025: -R$ 117.375 / ROI -0,33%","WS":"Margem R$ 18.630.090,72 / 49,42% (2025) confirmado","Apoloni":"Milho: R$ 3.410.906 ROI 890% / Soja: -R$ 495.730 ROI -8%","Piccini":"R$ 0,00 — sem dados financeiros para calcular margem"}},{"dim":"Irrigação","fonte":"v_irrigacao_area","suite":"Análise Avançada / Sinalização de Ausência","status":{"Jaçanã":"confirmado","WS":"indisponivel","Apoloni":"indisponivel","Piccini":"indisponivel"},"notes":{"Jaçanã":"Colin sinaliza ausência quando não há registro no dia","WS":"Fazenda sem sistema de irrigação cadastrado","Apoloni":"Fazenda sem sistema de irrigação cadastrado","Piccini":"Fazenda sem sistema de irrigação cadastrado"}},{"dim":"Máquinas / Frota","fonte":"historic_machine_summary_view","suite":"Frota e Máquinas / Análise Avançada","status":{"Jaçanã":"confirmado","WS":"parcial","Apoloni":"confirmado","Piccini":"parcial"},"notes":{"WS":"Frota cadastrada (213–219) mas sem telemetria ativa no período testado","Apoloni":"11 máquinas confirmadas com nomes completos (Massey, Jacto, New Holland…)","Piccini":"Sem sinal de máquina no período semanal — histórico de colheita existe"}},{"dim":"Telemetria / Diesel","fonte":"v_telemetria_diesel","suite":"Frota e Máquinas / Casos Críticos","status":{"Jaçanã":"confirmado","WS":"parcial","Apoloni":"confirmado","Piccini":"sem-dado"},"notes":{"WS":"Diesel zerado no período testado — frota sem telemetria ativa","Apoloni":"1.264,45 L confirmados (02–08/07/2026)","Piccini":"Sem registros de operação de máquina — diesel indisponível"}},{"dim":"Talhões","fonte":"v_talhoes_cadastro","suite":"Perguntas Fundamentais / Sinalização de Ausência","status":{"Jaçanã":"confirmado","WS":"confirmado","Apoloni":"parcial","Piccini":"confirmado"},"notes":{"Jaçanã":"52 talhões distintos (C1P*, C2P*, CT*, PC*, TL*)","WS":"53 talhões distintos confirmados — resultado financeiro por talhão indisponível","Apoloni":"Talhões existem (ex: 35 BS_MANEJOCARBONO) — contagem total não retornada","Piccini":"23–28 talhões ativos em 2026 confirmados"}},{"dim":"Operadores","fonte":"v_operadores_horas","suite":"Análise Avançada (Jaçanã)","status":{"Jaçanã":"parcial","WS":"parcial","Apoloni":"parcial","Piccini":"parcial"},"notes":{"Jaçanã":"37 operadores identificados — cruzamento com telemetria parcial (~7%)","WS":"5 operadores listados (IGOR, LUIZ…) — horas com 0% atribuição confiável","Apoloni":"11 operadores identificados — horas trabalhadas indisponíveis","Piccini":"27 operadores listados — cobertura de horas ~5%, ranking não confiável"}},{"dim":"Clima","fonte":"API OpenWeather (externo)","suite":"Perguntas Fundamentais / Casos Críticos","status":{"Jaçanã":"confirmado","WS":"confirmado","Apoloni":"confirmado","Piccini":"confirmado"},"notes":{"Jaçanã":"Temperatura, umidade e vento em tempo real (Vera/MT)"}}]},"levels":[{"num":1,"titulo":"CONSULTA","subtitulo":"Buscar Dados","objetivo":"Validar se o Colin consegue localizar e apresentar informações corretas.","avalia":["Consulta ao banco","Precisão","Tempo de resposta","Uso correto das ferramentas"],"perguntas":[{"id":"N1-01","texto":"Quantas máquinas estiveram em operação neste mês?","status":{"Jaçanã":"confirmado","WS":"sem-dado","Apoloni":"confirmado","Piccini":"sem-dado"}},{"id":"N1-02","texto":"Quantas máquinas estão paradas?","status":{"Jaçanã":"confirmado","WS":"sem-dado","Apoloni":"confirmado","Piccini":"sem-dado"}},{"id":"N1-03","texto":"Quais máquinas possuem alertas ativos?","status":{"Jaçanã":"confirmado","WS":"confirmado","Apoloni":"confirmado","Piccini":"sem-dado"}},{"id":"N1-04","texto":"Quantos alertas foram registrados neste mês?","status":{"Jaçanã":"confirmado","WS":"sem-dado","Apoloni":"confirmado","Piccini":"sem-dado"}},{"id":"N1-05","texto":"Qual máquina trabalhou mais horas neste mês?","status":{"Jaçanã":"confirmado","WS":"sem-dado","Apoloni":"confirmado","Piccini":"sem-dado"}},{"id":"N1-06","texto":"Qual máquina apresentou maior tempo ocioso neste mês?","status":{"Jaçanã":"confirmado","WS":"sem-dado","Apoloni":"confirmado","Piccini":"sem-dado"}},{"id":"N1-07","texto":"Quanto combustível foi consumido pela frota neste mês?","status":{"Jaçanã":"confirmado","WS":"confirmado","Apoloni":"confirmado","Piccini":"sem-dado"}},{"id":"N1-08","texto":"Quantos hectares foram trabalhados neste mês?","status":{"Jaçanã":"confirmado","WS":"confirmado","Apoloni":"confirmado","Piccini":"confirmado"}},{"id":"N1-09","texto":"Qual operação foi realizada por cada máquina neste mês?","status":{"Jaçanã":"confirmado","WS":"confirmado","Apoloni":"confirmado","Piccini":"confirmado"}},{"id":"N1-10","texto":"Quais máquinas estão com manutenção programada?","status":{"Jaçanã":"confirmado","WS":"sem-dado","Apoloni":"sem-dado","Piccini":"confirmado"}},{"id":"N1-P01","texto":"Qual a produtividade da safra mais recente disponível?","status":{"Jaçanã":"confirmado","WS":"confirmado","Apoloni":"parcial","Piccini":"sem-dado"}}]},{"num":2,"titulo":"CONTEXTO OPERACIONAL","subtitulo":"Resumir a Operação","objetivo":"O Colin deixa de responder perguntas isoladas e passa a resumir a operação.","avalia":["Consolidação","Contextualização","Resumo executivo","Identificação inicial de problemas"],"perguntas":[{"id":"N2-01","texto":"Faça um resumo executivo da operação deste mês.","status":{"Jaçanã":"confirmado","WS":"sem-dado","Apoloni":"confirmado","Piccini":"sem-dado"}},{"id":"N2-02","texto":"Quais máquinas merecem atenção neste mês?","status":{"Jaçanã":"confirmado","WS":"sem-dado","Apoloni":"confirmado","Piccini":"sem-dado"}},{"id":"N2-03","texto":"Quais foram os principais acontecimentos deste mês?","status":{"Jaçanã":"confirmado","WS":"sem-dado","Apoloni":"confirmado","Piccini":"sem-dado"}},{"id":"N2-04","texto":"Existe alguma máquina apresentando comportamento fora do padrão?","status":{"Jaçanã":"confirmado","WS":"sem-dado","Apoloni":"confirmado","Piccini":"sem-dado"}},{"id":"N2-05","texto":"Qual equipamento apresentou maior indisponibilidade neste mês?","status":{"Jaçanã":"confirmado","WS":"sem-dado","Apoloni":"confirmado","Piccini":"sem-dado"}},{"id":"N2-06","texto":"Quais alertas ocorreram com maior frequência?","status":{"Jaçanã":"confirmado","WS":"sem-dado","Apoloni":"confirmado","Piccini":"sem-dado"}},{"id":"N2-07","texto":"Existe alguma falha recorrente na frota?","status":{"Jaçanã":"confirmado","WS":"sem-dado","Apoloni":"confirmado","Piccini":"sem-dado"}},{"id":"N2-08","texto":"Qual operação apresentou maior consumo de combustível?","status":{"Jaçanã":"confirmado","WS":"confirmado","Apoloni":"confirmado","Piccini":"sem-dado"}},{"id":"N2-09","texto":"Qual máquina apresentou melhor desempenho operacional neste mês?","status":{"Jaçanã":"confirmado","WS":"sem-dado","Apoloni":"confirmado","Piccini":"sem-dado"}},{"id":"N2-10","texto":"Quais equipamentos tiveram maior tempo ocioso?","status":{"Jaçanã":"confirmado","WS":"sem-dado","Apoloni":"confirmado","Piccini":"confirmado"}},{"id":"N2-P01","texto":"Compare a produtividade entre as safras 2024 e 2025.","status":{"Jaçanã":"parcial","WS":"confirmado","Apoloni":"sem-dado","Piccini":"sem-dado"}}]},{"num":3,"titulo":"DIAGNÓSTICO OPERACIONAL","subtitulo":"Explicar e Antecipar","objetivo":"O Colin explica o problema e identifica causas prováveis.","avalia":["Análise de causa-raiz","Tendências","Recomendações proativas"],"perguntas":[{"id":"N3-01","texto":"Onde estamos perdendo produtividade?","status":{"Jaçanã":"confirmado","WS":"confirmado","Apoloni":"confirmado","Piccini":"confirmado"}},{"id":"N3-02","texto":"Qual máquina representa o maior risco operacional neste mês?","status":{"Jaçanã":"confirmado","WS":"sem-dado","Apoloni":"confirmado","Piccini":"sem-dado"}},{"id":"N3-03","texto":"Quais alertas são realmente críticos?","status":{"Jaçanã":"confirmado","WS":"sem-dado","Apoloni":"confirmado","Piccini":"sem-dado"}},{"id":"N3-04","texto":"Existe desperdício relevante de combustível?","status":{"Jaçanã":"confirmado","WS":"sem-dado","Apoloni":"confirmado","Piccini":"sem-dado"}},{"id":"N3-05","texto":"Quais máquinas estão operando abaixo do seu potencial?","status":{"Jaçanã":"confirmado","WS":"sem-dado","Apoloni":"confirmado","Piccini":"sem-dado"}},{"id":"N3-06","texto":"Por que a disponibilidade da frota diminuiu?","status":{"Jaçanã":"confirmado","WS":"sem-dado","Apoloni":"confirmado","Piccini":"sem-dado"}},{"id":"N3-07","texto":"Existe algum componente apresentando desgaste recorrente?","status":{"Jaçanã":"sem-dado","WS":"confirmado","Apoloni":"confirmado","Piccini":"sem-dado"}},{"id":"N3-08","texto":"Quais máquinas apresentam tendência de falha?","status":{"Jaçanã":"confirmado","WS":"sem-dado","Apoloni":"confirmado","Piccini":"sem-dado"}},{"id":"N3-09","texto":"Onde devemos concentrar a manutenção?","status":{"Jaçanã":"confirmado","WS":"confirmado","Apoloni":"confirmado","Piccini":"sem-dado"}},{"id":"N3-10","texto":"Quais falhas estão se repetindo nos últimos dias?","status":{"Jaçanã":"confirmado","WS":"sem-dado","Apoloni":"confirmado","Piccini":"sem-dado"}},{"id":"N3-P01","texto":"Qual a causa da variação de rentabilidade entre safras?","status":{"Jaçanã":"confirmado","WS":"confirmado","Apoloni":"confirmado","Piccini":"sem-dado"}}]}],"showCompNote":false};
+
+function cls(passed, total) {
+  const p = passed / total;
+  return p >= 0.80 ? 'pass' : p >= 0.60 ? 'warn' : 'fail';
+}
+
+function donutSVG(passed, total) {
+  const r = 36, cx = 48, cy = 48;
+  const circ = 2 * Math.PI * r;
+  const filled = circ * (passed / total);
+  const c = cls(passed, total);
+  const colors = {pass:'var(--pass)',warn:'var(--warn)',fail:'var(--fail)'};
+  return `<svg viewBox="0 0 96 96" width="96" height="96" aria-hidden="true">
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="var(--border)" stroke-width="7"/>
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${colors[c]}" stroke-width="7"
+      stroke-dasharray="${filled.toFixed(2)} ${(circ-filled).toFixed(2)}"
+      stroke-dashoffset="${(circ*0.25).toFixed(2)}" stroke-linecap="round"
+      style="transform-origin:${cx}px ${cy}px;transform:rotate(-90deg)"/>
+  </svg>`;
+}
+
+function renderFarms() {
+  const LEVEL_SUITES = [
+    { label: 'N1', name: 'Nível 1 — Consulta' },
+    { label: 'N2', name: 'Nível 2 — Contexto Operacional' },
+    { label: 'N3', name: 'Nível 3 — Diagnóstico Operacional' },
+  ];
+
+  const CATS = [
+    { label: 'Máquinas',        suites: ['Frota e Máquinas'] },
+    { label: 'Dados Agrícolas', suites: ['Perguntas Fundamentais'] },
+    { label: 'Consistência',    suites: ['Sinalização de Ausência','Casos Críticos'] },
+    { label: 'Contexto',        suites: ['Continuidade de Conversa','Rentabilidade por Talhão'] },
+    { label: 'Segurança',       suites: ['Segurança'] },
+  ];
+
+  function suiteScore(farm, name) {
+    const s = farm.suites.find(x => x.name === name);
+    return s ? { p: s.passed, t: s.total, pct: Math.round(s.passed/s.total*100) } : null;
+  }
+
+  function catScore(farm, cat) {
+    let p = 0, t = 0;
+    cat.suites.forEach(name => {
+      const s = farm.suites.find(x => x.name === name);
+      if (s) { p += s.passed; t += s.total; }
+    });
+    return t ? { p, t, pct: Math.round(p/t*100) } : null;
+  }
+
+  // Qualitative QA-progress states per level — fixed across all farms:
+  // N1 validated, N2 in progress, N3 in validation
+  const LEVEL_STATES = [
+    { label: 'N1', nodeClass: 'sn-done',     lblClass: 'sn-done',     caption: 'Validado'     },
+    { label: 'N2', nodeClass: 'sn-progress',  lblClass: 'sn-progress', caption: 'Em progresso' },
+    { label: 'N3', nodeClass: 'sn-review',    lblClass: 'sn-review',   caption: 'Em validação' },
+  ];
+  const CONNECTOR_STATES = ['cn-done', 'cn-progress'];
+
+  const farms = DASHBOARD_DATA.farms.filter(f => f.id !== 'colin');
+
+  document.getElementById('farms-grid').innerHTML = farms.map(farm => {
+    const overall = Math.round(farm.passed / farm.total * 100);
+    const oc = cls(farm.passed, farm.total);
+
+    // Stepper N1 → N2 → N3 (qualitative — reflects QA coverage progress, not pass rate)
+    let stepperHtml = `<div class="fc-stepper-wrap"><div class="fc-stepper-title">Mecanização</div><div class="fc-stepper">`;
+    LEVEL_STATES.forEach((lv, i) => {
+      stepperHtml += `<div class="fc-step">
+        <div class="fc-step-node ${lv.nodeClass}">${lv.label}</div>
+        <div class="fc-step-lbl ${lv.lblClass}">${lv.caption}</div>
+      </div>`;
+      if (i < LEVEL_STATES.length - 1) {
+        stepperHtml += `<div class="fc-connector ${CONNECTOR_STATES[i]}"></div>`;
+      }
+    });
+    stepperHtml += `</div></div>`;
+
+    // Category bars
+    const catRows = CATS.map(cat => {
+      const s = catScore(farm, cat);
+      if (!s) return `<div class="fcat-row">
+        <span class="fcat-label">${cat.label}</span>
+        <div class="fcat-bar"></div>
+        <span class="fcat-na">—</span>
+      </div>`;
+      const cc = cls(s.p, s.t);
+      return `<div class="fcat-row">
+        <span class="fcat-label">${cat.label}</span>
+        <div class="fcat-bar"><div class="fcat-fill ${cc}" style="width:${s.pct}%"></div></div>
+        <span class="fcat-pct ${cc}">${s.pct}%</span>
+      </div>`;
+    }).join('');
+
+    return `<div class="fc-card" role="region" aria-label="Fazenda ${farm.name}">
+      <div class="fc-header fc-${oc}">
+        <span class="fc-name">${farm.name}</span>
+        <div class="fc-badge">
+          <span class="fc-score ${oc}">${overall}%</span>
+          <span class="fc-total">${farm.passed}/${farm.total} casos</span>
+        </div>
+      </div>
+      ${stepperHtml}
+      <div class="fc-body">${catRows}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderSuites() {
+  const PILLARS = [
+    {
+      key: 'niveis', label: 'Níveis', icon: '📶',
+      suites: ['Nível 1 — Consulta','Nível 2 — Contexto Operacional','Nível 3 — Diagnóstico Operacional','Níveis por Período']
+    },
+    {
+      key: 'maquinas', label: 'Máquinas', icon: '🚜',
+      suites: ['Frota e Máquinas']
+    },
+    {
+      key: 'consistencia', label: 'Consistência', icon: '✓',
+      suites: ['Sinalização de Ausência','Casos Críticos','Regressão GPT 5.4→4.1','Persona e Segurança','Persona e Escopo']
+    },
+    {
+      key: 'contexto', label: 'Contexto', icon: '💬',
+      suites: ['Continuidade de Conversa','Perguntas Fundamentais','Rentabilidade por Talhão']
+    }
+  ];
+
+  const farms = DASHBOARD_DATA.farms.filter(f => f.id !== 'colin');
+
+  // calc pillar score per farm
+  function pillarScore(farm, pillar) {
+    let p = 0, t = 0;
+    pillar.suites.forEach(name => {
+      const s = farm.suites.find(x => x.name === name);
+      if (s) { p += s.passed; t += s.total; }
+    });
+    return t ? { p, t, pct: Math.round(p/t*100) } : null;
+  }
+
+  function pcls(pct) {
+    return pct >= 80 ? 'p-pass' : pct >= 60 ? 'p-warn' : 'p-fail';
+  }
+
+  // aggregate per pillar (all farms)
+  let html = `<div class="pillar-grid">`;
+  PILLARS.forEach(pillar => {
+    let tp = 0, tt = 0;
+    farms.forEach(f => { const s = pillarScore(f, pillar); if (s) { tp += s.p; tt += s.t; } });
+    const pct = tt ? Math.round(tp/tt*100) : 0;
+    const pc = pcls(pct);
+    html += `<div class="pillar-card ${pc}">
+      <div class="pillar-icon">${pillar.icon}</div>
+      <div class="pillar-label">${pillar.label}</div>
+      <div class="pillar-pct ${pc}">${pct}%</div>
+      <div class="pillar-sub">${tp}/${tt} casos</div>
+    </div>`;
+  });
+  html += `</div>`;
+
+  // farm × pillar breakdown table
+  html += `<table class="farm-pillar-table">
+    <thead><tr>
+      <th>Fazenda</th>
+      ${PILLARS.map(p => `<th>${p.label}</th>`).join('')}
+    </tr></thead><tbody>`;
+
+  farms.forEach(farm => {
+    html += `<tr><td>${farm.name}</td>`;
+    PILLARS.forEach(pillar => {
+      const s = pillarScore(farm, pillar);
+      if (!s) { html += `<td><span style="color:var(--txt-muted)">—</span></td>`; return; }
+      const pc = pcls(s.pct);
+      html += `<td><div class="pbar-wrap">
+        <div class="pbar-num ${pc}" style="color:var(--${pc === 'p-pass' ? 'pass' : pc === 'p-warn' ? 'warn' : 'fail'})">${s.pct}%</div>
+        <div class="pbar-track"><div class="pbar-fill ${pc}" style="width:${s.pct}%"></div></div>
+        <div style="font-size:10px;color:var(--txt-muted)">${s.p}/${s.t}</div>
+      </div></td>`;
+    });
+    html += `</tr>`;
+  });
+
+  html += `</tbody></table>`;
+  document.getElementById('pillar-view').innerHTML = html;
+}
+
+function renderBugs() {
+  document.getElementById('bugs-list').innerHTML = DASHBOARD_DATA.bugs.map(b => `
+    <div class="bug-row" role="listitem">
+      <div class="bug-sev-bar ${b.sev}"></div>
+      <div class="bug-id">${b.id}</div>
+      <div class="bug-body">
+        <div class="bug-title">${b.title}</div>
+        <div class="bug-detail">${b.detail}</div>
+      </div>
+    </div>`).join('');
+}
+
+function renderHeader() {
+  const total = DASHBOARD_DATA.farms.reduce((a,f) => a+f.total, 0);
+  const passed = DASHBOARD_DATA.farms.reduce((a,f) => a+f.passed, 0);
+  const pct = Math.round(passed/total*100);
+  const c = cls(passed, total);
+  document.getElementById('last-run').textContent = DASHBOARD_DATA.lastRun;
+  document.getElementById('last-run-time').textContent = DASHBOARD_DATA.lastRunTime || '—';
+  document.getElementById('total-cases').textContent = total;
+  const el = document.getElementById('overall-pct');
+  el.textContent = pct + '%';
+  el.className = `stat-value big ${c}`;
+}
+
+function renderCoverage() {
+  const cov = DASHBOARD_DATA.coverage;
+  if (!cov) return;
+  const statusMeta = {
+    'confirmado':   { label: 'Colin responde',   cls: 'pass'  },
+    'parcial':      { label: 'Resposta parcial', cls: 'warn'  },
+    'em-validacao': { label: 'Em implantação',   cls: 'info'  },
+    'sem-dado':     { label: 'Não possui dado',  cls: 'na'    },
+    'indisponivel': { label: 'Indisponível',     cls: 'na-hard' },
+    'sem-info':     { label: 'Sem informação',   cls: 'ghost' },
+    'nao-testado':  { label: 'Sem informação',   cls: 'ghost' },
+    'timeout':      { label: 'Timeout',          cls: 'fail'  },
+  };
+  const farms = cov.farms;
+  const grid = document.getElementById('coverage-farm-grid');
+  if (!grid) return;
+  grid.className = 'cov-farm-grid';
+  grid.innerHTML = farms.map(farm => {
+    let rows = '';
+    cov.rows.forEach(row => {
+      const s = (row.status && row.status[farm]) || 'nao-testado';
+      const m = statusMeta[s] || statusMeta['nao-testado'];
+      const note = (row.notes && row.notes[farm]) || '';
+      const dot = m.cls !== 'ghost' && m.cls !== 'na' ? `<span class="chip-dot"></span>` : '';
+      rows += `<tr>
+        <td>${row.dim}</td>
+        <td><code style="font-size:10px;background:var(--card-raised);padding:1px 4px;border-radius:2px;color:var(--txt-secondary)">${row.fonte || '—'}</code></td>
+        <td><div class="cov-cell">
+          <span class="cell-chip chip-${m.cls}">${dot}${m.label}</span>
+          ${note ? `<span class="cov-note">${note}</span>` : ''}
+        </div></td>
+      </tr>`;
+    });
+    return `<div class="cov-farm-block">
+      <div class="cov-farm-title">${farm}</div>
+      <div style="overflow-x:auto">
+        <table class="cov-farm-table">
+          <thead><tr>
+            <th>Funcionalidade</th>
+            <th>View / Tabela</th>
+            <th>Status</th>
+          </tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderLevels() {
+  const levels = DASHBOARD_DATA.levels;
+  if (!levels || !levels.length) return;
+  const farms = DASHBOARD_DATA.coverage.farms;
+
+  const statusMeta = {
+    'confirmado':   { label: 'Colin responde',   cls: 'pass',  short: '✓' },
+    'parcial':      { label: 'Resposta parcial', cls: 'warn',  short: '~' },
+    'em-validacao': { label: 'Em implantação',   cls: 'info',  short: '…' },
+    'sem-dado':     { label: 'Não possui dado',  cls: 'na',      short: '—' },
+    'indisponivel': { label: 'Indisponível',     cls: 'na-hard', short: '✕' },
+    'sem-info':     { label: 'Não testado',      cls: 'ghost',   short: '?' },
+    'nao-testado':  { label: 'Não testado',      cls: 'ghost',   short: '?' },
+  };
+
+  // Score: confirmado=2, parcial=1, resto=0
+  function score(s) { return s === 'confirmado' ? 2 : s === 'parcial' ? 1 : 0; }
+
+  // Per-farm level status: 'reached' | 'partial' | 'missing'
+  function farmLevelStatus(levelData, farm) {
+    const total = levelData.perguntas.length * 2;
+    const earned = levelData.perguntas.reduce((sum, q) => sum + score(q.status[farm] || 'nao-testado'), 0);
+    const pct = earned / total;
+    if (pct >= 0.6) return 'reached';
+    if (pct >= 0.2) return 'partial';
+    return 'missing';
+  }
+
+  const levelColors = ['var(--pass)', 'var(--warn)', '#a78bfa'];
+  const badgeCls = ['nivel-badge-1', 'nivel-badge-2', 'nivel-badge-3'];
+
+  // ── Summary bar ──
+  const bar = document.getElementById('farm-level-bar');
+  if (bar) {
+    bar.className = 'farm-level-bar';
+    bar.innerHTML = farms.map(farm => {
+      const dots = levels.map((lv, i) => {
+        const st = farmLevelStatus(lv, farm);
+        const bg = st !== 'missing' ? levelColors[i] : '';
+        const extra = st === 'missing' ? 'missing' : st === 'partial' ? 'partial' : 'reached';
+        return `<div class="farm-level-dot ${extra}" style="${bg ? 'background:'+bg+';color:#fff' : ''}" title="Nível ${lv.num}: ${st}">${lv.num}</div>`;
+      }).join('');
+      const maxLevel = levels.reduce((max, lv) => {
+        const st = farmLevelStatus(lv, farm);
+        return st === 'reached' ? lv.num : max;
+      }, 0);
+      const label = maxLevel > 0 ? `Nível ${maxLevel} confirmado` : 'Em avaliação';
+      return `<div class="farm-level-card">
+        <div class="farm-level-name">${farm}</div>
+        <div class="farm-level-dots">${dots}</div>
+        <div class="farm-level-label">${label}</div>
+      </div>`;
+    }).join('');
+  }
+
+  // ── Level detail tables ──
+  const container = document.getElementById('nivel-sections');
+  if (!container) return;
+  container.innerHTML = levels.map((lv, li) => {
+    const farmHeaders = farms.map(f => `<th class="farm-th">${f}</th>`).join('');
+    const rows = lv.perguntas.map(q => {
+      const farmCells = farms.map(farm => {
+        const s = q.status[farm] || 'nao-testado';
+        const m = statusMeta[s] || statusMeta['nao-testado'];
+        const dot = m.cls !== 'ghost' && m.cls !== 'na' ? `<span class="chip-dot"></span>` : '';
+        return `<td class="farm-td"><span class="cell-chip chip-${m.cls}" style="font-size:10px;padding:1px 5px">${dot}${m.label}</span></td>`;
+      }).join('');
+      return `<tr><td class="nivel-id">${q.id}</td><td>${q.texto}</td>${farmCells}</tr>`;
+    }).join('');
+    const avaliaTags = lv.avalia.map(a => `<span class="nivel-tag">${a}</span>`).join('');
+    return `<div class="nivel-section">
+      <div class="nivel-header">
+        <div class="nivel-badge ${badgeCls[li]}">${lv.num}</div>
+        <div class="nivel-title-wrap">
+          <div class="nivel-title">Nível ${lv.num} — ${lv.titulo}</div>
+          <div class="nivel-subtitle">${lv.subtitulo} · ${lv.objetivo}</div>
+        </div>
+        <div class="nivel-avalia">${avaliaTags}</div>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="nivel-table">
+          <thead><tr><th style="width:54px">#</th><th>Pergunta</th>${farmHeaders}</tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ── navegação por abas ── */
+function navigate(pageId) {
+  document.querySelectorAll('.nav-tab').forEach(t => {
+    const active = t.dataset.page === pageId;
+    t.classList.toggle('active', active);
+    t.setAttribute('aria-selected', active);
+  });
+  document.querySelectorAll('.page').forEach(p => {
+    p.classList.toggle('active', p.id === 'page-' + pageId);
+  });
+}
+
+document.querySelectorAll('.nav-tab').forEach(tab => {
+  tab.addEventListener('click', () => navigate(tab.dataset.page));
+});
+
+document.getElementById('theme-toggle').addEventListener('click', () => {
+  const root = document.documentElement;
+  if (!root.dataset.theme) {
+    root.dataset.theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'light' : 'dark';
+  } else {
+    root.dataset.theme = root.dataset.theme === 'dark' ? 'light' : 'dark';
+  }
+});
+
+const PERIODS_DATA = {
+  lastRun: "17/07/2026 · 10:50",
+  farms: ["Jaçanã", "WS", "Apoloni", "Piccini"],
+  years: [2022, 2023, 2024, 2025, 2026],
+  matriz: [
+    {
+      dim: "Safra / Produtividade",
+      rows: {
+        "Jaçanã": {
+          2022: { s: "ok",      v: "5.677 ha · ⚠️ 507sc/ha (valor suspeito)" },
+          2023: { s: "partial", v: "4.329 ha · 166k sc — dado parcial (cliente disponibilizou parte da informação)" },
+          2024: { s: "ok",      v: "3.474 ha · 105,27 sc/ha" },
+          2025: { s: "ok",      v: "5.409 ha · 79,65 sc/ha" },
+          2026: { s: "partial", v: "2.243 ha plantados · safra em andamento, sem colheita" }
+        },
+        "WS": {
+          2022: { s: "none",    v: "Sem dado no período" },
+          2023: { s: "warn",    v: "Safra detectada mas área plantada zerada" },
+          2024: { s: "ok",      v: "8.637 ha · 389k sc colhidas" },
+          2025: { s: "ok",      v: "2.171 ha · 47,9 sc/ha" },
+          2026: { s: "partial", v: "5.032 ha colhidos · área plantada não informada" }
+        },
+        "Apoloni": {
+          2022: { s: "none",    v: "Sem dado no período" },
+          2023: { s: "partial", v: "Milho 132sc/ha · Soja 57sc/ha · área plantada zerada" },
+          2024: { s: "partial", v: "1.278 ha colhidos · área plantada zerada" },
+          2025: { s: "partial", v: "5.008 ha plantados · sc/ha não calculado" },
+          2026: { s: "partial", v: "3.990 ha plantados · sc/ha não calculado" }
+        },
+        "Piccini": {
+          2022: { s: "warn",    v: "Sem dado 2022 — retornou dado de 2026 (contaminação)" },
+          2023: { s: "partial", v: "111,6 sc/ha · 1.857 ha colhidos · área plantada zerada" },
+          2024: { s: "partial", v: "Área colhida: 966 ha · área plantada zerada" },
+          2025: { s: "partial", v: "1.550 ha colhidos · sc/ha não calculado" },
+          2026: { s: "partial", v: "1.252 ha colhidos · área plantada zerada" }
+        }
+      }
+    }
+  ],
+  observations: [
+    { sev: "high",  text: "Jaçanã 2022: produtividade retornada como 507 sc/ha — impossível para qualquer cultura. Provável bug de cálculo (divisão por área errada ou mistura de unidades)." },
+    { sev: "high",  text: "Piccini 2022: sem dado no período, mas Colin retornou um número de 2026 antes de corrigir. Risco de contaminação de contexto com período histórico incorreto." },
+    { sev: "low",   text: "Jaçanã 2023: dado parcial — cliente disponibilizou apenas parte das informações do período. Colin retornou área e total de sacas mas sc/ha não foi calculado. Comportamento esperado dado a cobertura." },
+    { sev: "med",   text: "WS 2023: área plantada zerada — sistema pode ter entrado em operação somente a partir de 2024." },
+    { sev: "med",   text: "Apoloni e Piccini: área plantada sistematicamente ausente em todos os anos. Não é bug de período — dado simplesmente não existe no sistema (apenas área colhida)." },
+    { sev: "low",   text: "WS e Apoloni 2026: colheita registrada mas área plantada não informada — safra ainda em andamento, comportamento esperado." }
+  ]
+};
+
+function renderPeriods() {
+  const { farms, years, matriz, lastRun } = PERIODS_DATA;
+  const statusMeta = {
+    ok:      { label: "Completo",  cls: "chip-pass" },
+    partial: { label: "Parcial",   cls: "chip-warn" },
+    warn:    { label: "Parcial",   cls: "chip-warn" },
+    none:    { label: "Sem dado",  cls: "chip-na"   }
+  };
+
+  let html = `<div style="font-size:11px;color:var(--txt-muted);margin-bottom:16px">Rodada em ${lastRun} · mesma pergunta enviada para todas as fazendas em cada ano · passe o mouse para ver o detalhe</div>`;
+
+  html += `<div class="legend-row" style="margin-bottom:16px">
+    ${Object.entries(statusMeta).filter(([k]) => k !== 'warn').map(([,m]) =>
+      `<div class="legend-item"><span class="cell-chip ${m.cls}" style="padding:1px 6px;font-size:10px">${m.label}</span></div>`
+    ).join('')}
+  </div>`;
+
+  const dim = matriz[0];
+  html += `<div class="table-wrap"><table style="width:100%;border-collapse:collapse">
+    <thead><tr>
+      <th style="text-align:left;padding:6px 10px;font-size:11px;color:var(--txt-muted);border-bottom:1px solid var(--border);font-weight:500">Fazenda</th>
+      ${years.map(y => `<th style="text-align:center;padding:6px 10px;font-size:11px;color:var(--txt-muted);border-bottom:1px solid var(--border);font-weight:500">${y}</th>`).join('')}
+    </tr></thead><tbody>`;
+
+  farms.forEach((farm, fi) => {
+    html += `<tr style="border-bottom:1px solid var(--border)${fi % 2 === 0 ? ';background:var(--card-raised)' : ''}">
+      <td style="padding:8px 10px;font-size:12px;font-weight:600;color:var(--txt-primary);white-space:nowrap">${farm}</td>`;
+    years.forEach(y => {
+      const cell = dim.rows[farm]?.[y] || { s: "none", v: "—" };
+      const meta = statusMeta[cell.s] || statusMeta.none;
+      html += `<td style="padding:6px 8px;text-align:center">
+        <span class="cell-chip ${meta.cls}" style="padding:2px 7px;font-size:10px;cursor:default" title="${cell.v}">${meta.label}</span>
+      </td>`;
+    });
+    html += `</tr>`;
+  });
+
+  html += `</tbody></table></div>`;
+  document.getElementById('periods-content').innerHTML = html;
+}
+
+renderHeader();
+renderFarms();
+renderSuites();
+renderLevels();
+renderCoverage();
+renderPeriods();
+</script>
+</body>
+</html>

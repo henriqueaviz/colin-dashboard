@@ -1,0 +1,10 @@
+# Arquivos ignorados
+resultados/
+golden/
+__pycache__/
+*.py
+*.json
+*.md
+*.txt
+.env*
+requirements.txt
