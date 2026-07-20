@@ -4,7 +4,7 @@ golden/
 __pycache__/
 *.py
 *.json
-*.md
+resultados/*.md
 *.txt
 .env*
 requirements.txt
