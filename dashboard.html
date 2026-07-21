@@ -689,92 +689,182 @@ document.getElementById('theme-toggle').addEventListener('click', () => {
 });
 
 const PERIODS_DATA = {
-  lastRun: "17/07/2026 · 10:50",
+  lastRun: "20/07/2026 · 15:20",
   farms: ["Jaçanã", "WS", "Apoloni", "Piccini"],
-  years: [2022, 2023, 2024, 2025, 2026],
-  matriz: [
+  // Colunas: anos históricos + meses recentes
+  cols: [
+    { id:"2022", label:"2022",    group:"ano" },
+    { id:"2023", label:"2023",    group:"ano" },
+    { id:"2024", label:"2024",    group:"ano" },
+    { id:"2025", label:"2025",    group:"ano" },
+    { id:"2026", label:"2026",    group:"ano" },
+    { id:"jun26", label:"jun/26", group:"mes" },
+    { id:"jul26", label:"jul/26", group:"mes" }
+  ],
+  dims: [
     {
-      dim: "Safra / Produtividade",
+      id: "produtividade", label: "Colheita / Produtividade",
       rows: {
-        "Jaçanã": {
-          2022: { s: "ok",      v: "5.677 ha · ⚠️ 507sc/ha (valor suspeito)" },
-          2023: { s: "partial", v: "4.329 ha · 166k sc — dado parcial (cliente disponibilizou parte da informação)" },
-          2024: { s: "ok",      v: "3.474 ha · 105,27 sc/ha" },
-          2025: { s: "ok",      v: "5.409 ha · 79,65 sc/ha" },
-          2026: { s: "partial", v: "2.243 ha plantados · safra em andamento, sem colheita" }
-        },
-        "WS": {
-          2022: { s: "none",    v: "Sem dado no período" },
-          2023: { s: "warn",    v: "Safra detectada mas área plantada zerada" },
-          2024: { s: "ok",      v: "8.637 ha · 389k sc colhidas" },
-          2025: { s: "ok",      v: "2.171 ha · 47,9 sc/ha" },
-          2026: { s: "partial", v: "5.032 ha colhidos · área plantada não informada" }
-        },
-        "Apoloni": {
-          2022: { s: "none",    v: "Sem dado no período" },
-          2023: { s: "partial", v: "Milho 132sc/ha · Soja 57sc/ha · área plantada zerada" },
-          2024: { s: "partial", v: "1.278 ha colhidos · área plantada zerada" },
-          2025: { s: "partial", v: "5.008 ha plantados · sc/ha não calculado" },
-          2026: { s: "partial", v: "3.990 ha plantados · sc/ha não calculado" }
-        },
-        "Piccini": {
-          2022: { s: "warn",    v: "Sem dado 2022 — retornou dado de 2026 (contaminação)" },
-          2023: { s: "partial", v: "111,6 sc/ha · 1.857 ha colhidos · área plantada zerada" },
-          2024: { s: "partial", v: "Área colhida: 966 ha · área plantada zerada" },
-          2025: { s: "partial", v: "1.550 ha colhidos · sc/ha não calculado" },
-          2026: { s: "partial", v: "1.252 ha colhidos · área plantada zerada" }
-        }
+        "Jaçanã":  { "2022":{s:"none",v:"Sem retorno (provável impacto problema de banco — 20/07)"}, "2023":{s:"none",v:"Sem retorno"}, "2024":{s:"none",v:"Sem retorno (era ok em 17/07)"}, "2025":{s:"none",v:"Sem retorno (era ok em 17/07)"}, "2026":{s:"none",v:"Safra em andamento"}, "jun26":{s:"na",v:"N/A"}, "jul26":{s:"na",v:"N/A"} },
+        "WS":      { "2022":{s:"none",v:"Sem dado no período"}, "2023":{s:"ok",v:"Dado confirmado (sc/ha + área)"}, "2024":{s:"ok",v:"8.637 ha · 389k sc colhidas"}, "2025":{s:"ok",v:"2.171 ha · 47,9 sc/ha"}, "2026":{s:"partial",v:"5.032 ha colhidos · safra em andamento"}, "jun26":{s:"na",v:"N/A"}, "jul26":{s:"na",v:"N/A"} },
+        "Apoloni": { "2022":{s:"none",v:"Sem dado"}, "2023":{s:"none",v:"Sem dado"}, "2024":{s:"ok",v:"1.278 ha colhidos · dado confirmado"}, "2025":{s:"none",v:"Sem retorno (regrediu em 20/07)"}, "2026":{s:"partial",v:"3.990 ha plantados · sc/ha não calculado"}, "jun26":{s:"na",v:"N/A"}, "jul26":{s:"na",v:"N/A"} },
+        "Piccini": { "2022":{s:"none",v:"Sem dado"}, "2023":{s:"none",v:"Sem dado"}, "2024":{s:"none",v:"Sem dado"}, "2025":{s:"none",v:"Sem dado"}, "2026":{s:"none",v:"Sem dado"}, "jun26":{s:"na",v:"N/A"}, "jul26":{s:"na",v:"N/A"} }
+      }
+    },
+    {
+      id: "custo", label: "Custo por Safra",
+      rows: {
+        "Jaçanã":  { "2022":{s:"none",v:"Sem dado"}, "2023":{s:"ok",v:"Confirmado"}, "2024":{s:"ok",v:"Confirmado"}, "2025":{s:"ok",v:"Confirmado"}, "2026":{s:"none",v:"Sem dado"}, "jun26":{s:"na",v:"N/A"}, "jul26":{s:"na",v:"N/A"} },
+        "WS":      { "2022":{s:"none",v:"Sem dado"}, "2023":{s:"ok",v:"Confirmado"}, "2024":{s:"ok",v:"Confirmado"}, "2025":{s:"ok",v:"R$ 4.198,35/ha"}, "2026":{s:"none",v:"Em validação — zerado"}, "jun26":{s:"na",v:"N/A"}, "jul26":{s:"na",v:"N/A"} },
+        "Apoloni": { "2022":{s:"none",v:"Sem dado"}, "2023":{s:"none",v:"Sem dado"}, "2024":{s:"ok",v:"Confirmado"}, "2025":{s:"ok",v:"Confirmado"}, "2026":{s:"timeout",v:"Timeout — query travada"}, "jun26":{s:"na",v:"N/A"}, "jul26":{s:"na",v:"N/A"} },
+        "Piccini": { "2022":{s:"ok",v:"Retornou dado isolado"}, "2023":{s:"none",v:"Sem dado"}, "2024":{s:"none",v:"Sem dado"}, "2025":{s:"none",v:"Sem dado"}, "2026":{s:"none",v:"Sem dado"}, "jun26":{s:"na",v:"N/A"}, "jul26":{s:"na",v:"N/A"} }
+      }
+    },
+    {
+      id: "vendas", label: "Vendas / Receita",
+      rows: {
+        "Jaçanã":  { "2022":{s:"ok",v:"Confirmado"}, "2023":{s:"none",v:"Sem dado"}, "2024":{s:"ok",v:"Confirmado"}, "2025":{s:"ok",v:"Confirmado"}, "2026":{s:"ok",v:"Confirmado"}, "jun26":{s:"na",v:"N/A"}, "jul26":{s:"na",v:"N/A"} },
+        "WS":      { "2022":{s:"ok",v:"Confirmado"}, "2023":{s:"ok",v:"R$ 19.173.037,20"}, "2024":{s:"ok",v:"Confirmado"}, "2025":{s:"ok",v:"Confirmado"}, "2026":{s:"ok",v:"Confirmado"}, "jun26":{s:"na",v:"N/A"}, "jul26":{s:"na",v:"N/A"} },
+        "Apoloni": { "2022":{s:"none",v:"Sem dado"}, "2023":{s:"ok",v:"Confirmado"}, "2024":{s:"ok",v:"Confirmado"}, "2025":{s:"ok",v:"Confirmado"}, "2026":{s:"none",v:"Sem dado"}, "jun26":{s:"na",v:"N/A"}, "jul26":{s:"na",v:"N/A"} },
+        "Piccini": { "2022":{s:"none",v:"Sem dado"}, "2023":{s:"ok",v:"Confirmado"}, "2024":{s:"none",v:"Sem dado"}, "2025":{s:"ok",v:"Confirmado"}, "2026":{s:"ok",v:"Confirmado"}, "jun26":{s:"na",v:"N/A"}, "jul26":{s:"na",v:"N/A"} }
+      }
+    },
+    {
+      id: "plantacao", label: "Plantação (área)",
+      rows: {
+        "Jaçanã":  { "2022":{s:"ok",v:"Confirmado"}, "2023":{s:"ok",v:"Confirmado"}, "2024":{s:"none",v:"Sem dado"}, "2025":{s:"ok",v:"Confirmado"}, "2026":{s:"ok",v:"Confirmado"}, "jun26":{s:"na",v:"N/A"}, "jul26":{s:"na",v:"N/A"} },
+        "WS":      { "2022":{s:"none",v:"Sem dado"}, "2023":{s:"ok",v:"Confirmado"}, "2024":{s:"ok",v:"Confirmado"}, "2025":{s:"ok",v:"Confirmado"}, "2026":{s:"ok",v:"Confirmado"}, "jun26":{s:"na",v:"N/A"}, "jul26":{s:"na",v:"N/A"} },
+        "Apoloni": { "2022":{s:"ok",v:"Confirmado"}, "2023":{s:"none",v:"Sem dado"}, "2024":{s:"none",v:"Sem dado"}, "2025":{s:"ok",v:"Confirmado"}, "2026":{s:"ok",v:"Confirmado"}, "jun26":{s:"na",v:"N/A"}, "jul26":{s:"na",v:"N/A"} },
+        "Piccini": { "2022":{s:"none",v:"Sem dado"}, "2023":{s:"ok",v:"Confirmado"}, "2024":{s:"none",v:"Sem dado"}, "2025":{s:"none",v:"Sem dado"}, "2026":{s:"none",v:"Sem dado"}, "jun26":{s:"na",v:"N/A"}, "jul26":{s:"na",v:"N/A"} }
+      }
+    },
+    {
+      id: "aplicacoes", label: "Aplicações / Insumos",
+      rows: {
+        "Jaçanã":  { "2022":{s:"na",v:"N/A"}, "2023":{s:"na",v:"N/A"}, "2024":{s:"none",v:"Sem dado"}, "2025":{s:"ok",v:"Confirmado"}, "2026":{s:"na",v:"N/A"}, "jun26":{s:"na",v:"N/A"}, "jul26":{s:"na",v:"N/A"} },
+        "WS":      { "2022":{s:"na",v:"N/A"}, "2023":{s:"na",v:"N/A"}, "2024":{s:"none",v:"Sem dado"}, "2025":{s:"ok",v:"Confirmado"}, "2026":{s:"na",v:"N/A"}, "jun26":{s:"na",v:"N/A"}, "jul26":{s:"na",v:"N/A"} },
+        "Apoloni": { "2022":{s:"na",v:"N/A"}, "2023":{s:"na",v:"N/A"}, "2024":{s:"ok",v:"Confirmado"}, "2025":{s:"ok",v:"Confirmado"}, "2026":{s:"na",v:"N/A"}, "jun26":{s:"na",v:"N/A"}, "jul26":{s:"na",v:"N/A"} },
+        "Piccini": { "2022":{s:"na",v:"N/A"}, "2023":{s:"na",v:"N/A"}, "2024":{s:"none",v:"Sem dado"}, "2025":{s:"none",v:"Sem dado"}, "2026":{s:"na",v:"N/A"}, "jun26":{s:"na",v:"N/A"}, "jul26":{s:"na",v:"N/A"} }
+      }
+    },
+    {
+      id: "maquinas", label: "Máquinas em operação",
+      rows: {
+        "Jaçanã":  { "2022":{s:"na",v:"N/A"}, "2023":{s:"na",v:"N/A"}, "2024":{s:"na",v:"N/A"}, "2025":{s:"na",v:"N/A"}, "2026":{s:"na",v:"N/A"}, "jun26":{s:"ok",v:"Confirmado"}, "jul26":{s:"ok",v:"Confirmado"} },
+        "WS":      { "2022":{s:"na",v:"N/A"}, "2023":{s:"na",v:"N/A"}, "2024":{s:"na",v:"N/A"}, "2025":{s:"na",v:"N/A"}, "2026":{s:"na",v:"N/A"}, "jun26":{s:"ok",v:"Confirmado"}, "jul26":{s:"ok",v:"5 máquinas (FROTA 213–219)"} },
+        "Apoloni": { "2022":{s:"na",v:"N/A"}, "2023":{s:"na",v:"N/A"}, "2024":{s:"na",v:"N/A"}, "2025":{s:"na",v:"N/A"}, "2026":{s:"na",v:"N/A"}, "jun26":{s:"ok",v:"Confirmado"}, "jul26":{s:"ok",v:"Confirmado"} },
+        "Piccini": { "2022":{s:"na",v:"N/A"}, "2023":{s:"na",v:"N/A"}, "2024":{s:"na",v:"N/A"}, "2025":{s:"na",v:"N/A"}, "2026":{s:"na",v:"N/A"}, "jun26":{s:"ok",v:"Confirmado"}, "jul26":{s:"ok",v:"Confirmado"} }
+      }
+    },
+    {
+      id: "alertas", label: "Alertas de máquinas",
+      rows: {
+        "Jaçanã":  { "2022":{s:"na",v:"N/A"}, "2023":{s:"na",v:"N/A"}, "2024":{s:"na",v:"N/A"}, "2025":{s:"na",v:"N/A"}, "2026":{s:"na",v:"N/A"}, "jun26":{s:"na",v:"N/A"}, "jul26":{s:"none",v:"Sem retorno (gap 20/07 — provável problema de banco)"} },
+        "WS":      { "2022":{s:"na",v:"N/A"}, "2023":{s:"na",v:"N/A"}, "2024":{s:"na",v:"N/A"}, "2025":{s:"na",v:"N/A"}, "2026":{s:"na",v:"N/A"}, "jun26":{s:"na",v:"N/A"}, "jul26":{s:"ok",v:"Confirmado"} },
+        "Apoloni": { "2022":{s:"na",v:"N/A"}, "2023":{s:"na",v:"N/A"}, "2024":{s:"na",v:"N/A"}, "2025":{s:"na",v:"N/A"}, "2026":{s:"na",v:"N/A"}, "jun26":{s:"na",v:"N/A"}, "jul26":{s:"ok",v:"Confirmado"} },
+        "Piccini": { "2022":{s:"na",v:"N/A"}, "2023":{s:"na",v:"N/A"}, "2024":{s:"na",v:"N/A"}, "2025":{s:"na",v:"N/A"}, "2026":{s:"na",v:"N/A"}, "jun26":{s:"na",v:"N/A"}, "jul26":{s:"ok",v:"Confirmado"} }
+      }
+    },
+    {
+      id: "talhoes", label: "Talhões cadastrados",
+      rows: {
+        "Jaçanã":  { "2022":{s:"na",v:"N/A"}, "2023":{s:"na",v:"N/A"}, "2024":{s:"na",v:"N/A"}, "2025":{s:"na",v:"N/A"}, "2026":{s:"ok",v:"Confirmado"}, "jun26":{s:"na",v:"N/A"}, "jul26":{s:"na",v:"N/A"} },
+        "WS":      { "2022":{s:"na",v:"N/A"}, "2023":{s:"na",v:"N/A"}, "2024":{s:"na",v:"N/A"}, "2025":{s:"na",v:"N/A"}, "2026":{s:"ok",v:"Confirmado"}, "jun26":{s:"na",v:"N/A"}, "jul26":{s:"na",v:"N/A"} },
+        "Apoloni": { "2022":{s:"na",v:"N/A"}, "2023":{s:"na",v:"N/A"}, "2024":{s:"na",v:"N/A"}, "2025":{s:"na",v:"N/A"}, "2026":{s:"ok",v:"Confirmado"}, "jun26":{s:"na",v:"N/A"}, "jul26":{s:"na",v:"N/A"} },
+        "Piccini": { "2022":{s:"na",v:"N/A"}, "2023":{s:"na",v:"N/A"}, "2024":{s:"na",v:"N/A"}, "2025":{s:"na",v:"N/A"}, "2026":{s:"ok",v:"Confirmado"}, "jun26":{s:"na",v:"N/A"}, "jul26":{s:"na",v:"N/A"} }
       }
     }
-  ],
-  observations: [
-    { sev: "high",  text: "Jaçanã 2022: produtividade retornada como 507 sc/ha — impossível para qualquer cultura. Provável bug de cálculo (divisão por área errada ou mistura de unidades)." },
-    { sev: "high",  text: "Piccini 2022: sem dado no período, mas Colin retornou um número de 2026 antes de corrigir. Risco de contaminação de contexto com período histórico incorreto." },
-    { sev: "low",   text: "Jaçanã 2023: dado parcial — cliente disponibilizou apenas parte das informações do período. Colin retornou área e total de sacas mas sc/ha não foi calculado. Comportamento esperado dado a cobertura." },
-    { sev: "med",   text: "WS 2023: área plantada zerada — sistema pode ter entrado em operação somente a partir de 2024." },
-    { sev: "med",   text: "Apoloni e Piccini: área plantada sistematicamente ausente em todos os anos. Não é bug de período — dado simplesmente não existe no sistema (apenas área colhida)." },
-    { sev: "low",   text: "WS e Apoloni 2026: colheita registrada mas área plantada não informada — safra ainda em andamento, comportamento esperado." }
   ]
 };
 
 function renderPeriods() {
-  const { farms, years, matriz, lastRun } = PERIODS_DATA;
-  const statusMeta = {
-    ok:      { label: "Completo",  cls: "chip-pass" },
-    partial: { label: "Parcial",   cls: "chip-warn" },
-    warn:    { label: "Parcial",   cls: "chip-warn" },
-    none:    { label: "Sem dado",  cls: "chip-na"   }
+  const { farms, cols, dims, lastRun } = PERIODS_DATA;
+
+  const sMeta = {
+    ok:      { label:"Tem dado",   cls:"chip-pass",    sym:"✓" },
+    partial: { label:"Parcial",    cls:"chip-warn",    sym:"~" },
+    none:    { label:"Sem dado",   cls:"chip-na",      sym:"—" },
+    timeout: { label:"Timeout",    cls:"chip-fail",    sym:"⏱" },
+    na:      { label:"",           cls:"chip-ghost",   sym:"" }
   };
 
-  let html = `<div style="font-size:11px;color:var(--txt-muted);margin-bottom:16px">Rodada em ${lastRun} · mesma pergunta enviada para todas as fazendas em cada ano · passe o mouse para ver o detalhe</div>`;
+  // Agrupa colunas por tipo para cabeçalho duplo
+  const anosCols = cols.filter(c => c.group === 'ano');
+  const mesCols  = cols.filter(c => c.group === 'mes');
 
-  html += `<div class="legend-row" style="margin-bottom:16px">
-    ${Object.entries(statusMeta).filter(([k]) => k !== 'warn').map(([,m]) =>
-      `<div class="legend-item"><span class="cell-chip ${m.cls}" style="padding:1px 6px;font-size:10px">${m.label}</span></div>`
-    ).join('')}
-  </div>`;
+  let html = `
+    <div style="font-size:11px;color:var(--txt-muted);margin-bottom:14px">
+      Mapeamento em ${lastRun} · passe o mouse sobre cada célula para ver o detalhe
+    </div>
+    <div class="legend-row" style="margin-bottom:18px">
+      ${['ok','partial','none','timeout'].map(k =>
+        `<div class="legend-item" style="display:flex;align-items:center;gap:5px">
+          <span class="cell-chip ${sMeta[k].cls}" style="padding:1px 8px;font-size:10px">${sMeta[k].label}</span>
+        </div>`
+      ).join('')}
+    </div>`;
 
-  const dim = matriz[0];
-  html += `<div class="table-wrap"><table style="width:100%;border-collapse:collapse">
-    <thead><tr>
-      <th style="text-align:left;padding:6px 10px;font-size:11px;color:var(--txt-muted);border-bottom:1px solid var(--border);font-weight:500">Fazenda</th>
-      ${years.map(y => `<th style="text-align:center;padding:6px 10px;font-size:11px;color:var(--txt-muted);border-bottom:1px solid var(--border);font-weight:500">${y}</th>`).join('')}
-    </tr></thead><tbody>`;
+  // Uma card por fazenda
+  farms.forEach(farm => {
+    html += `
+      <div style="margin-bottom:28px">
+        <div style="font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;
+                    color:var(--pass);padding-bottom:6px;border-bottom:2px solid var(--pass);
+                    margin-bottom:12px">${farm}</div>
+        <div class="table-wrap">
+          <table style="width:100%;border-collapse:collapse;font-size:11px">
+            <thead>
+              <tr>
+                <th rowspan="2" style="text-align:left;padding:5px 10px;font-size:10px;font-weight:600;
+                    letter-spacing:0.07em;text-transform:uppercase;color:var(--txt-muted);
+                    border-bottom:2px solid var(--border);white-space:nowrap;vertical-align:bottom">
+                  Dimensão
+                </th>
+                ${anosCols.length ? `<th colspan="${anosCols.length}" style="text-align:center;padding:4px 8px;
+                    font-size:9px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;
+                    color:var(--txt-muted);border-bottom:1px solid var(--border);
+                    border-left:2px solid var(--border)">HISTÓRICO ANUAL</th>` : ''}
+                ${mesCols.length  ? `<th colspan="${mesCols.length}"  style="text-align:center;padding:4px 8px;
+                    font-size:9px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;
+                    color:var(--info);border-bottom:1px solid var(--border);
+                    border-left:2px solid var(--border)">MESES RECENTES</th>` : ''}
+              </tr>
+              <tr>
+                ${anosCols.map((c,i) => `
+                  <th style="text-align:center;padding:4px 8px;font-size:10px;font-weight:600;
+                      color:var(--txt-muted);border-bottom:2px solid var(--border);min-width:56px;
+                      ${i===0?'border-left:2px solid var(--border)':''}">${c.label}</th>`).join('')}
+                ${mesCols.map((c,i) => `
+                  <th style="text-align:center;padding:4px 8px;font-size:10px;font-weight:600;
+                      color:var(--info);border-bottom:2px solid var(--border);min-width:56px;
+                      ${i===0?'border-left:2px solid var(--border)':''}">${c.label}</th>`).join('')}
+              </tr>
+            </thead>
+            <tbody>`;
 
-  farms.forEach((farm, fi) => {
-    html += `<tr style="border-bottom:1px solid var(--border)${fi % 2 === 0 ? ';background:var(--card-raised)' : ''}">
-      <td style="padding:8px 10px;font-size:12px;font-weight:600;color:var(--txt-primary);white-space:nowrap">${farm}</td>`;
-    years.forEach(y => {
-      const cell = dim.rows[farm]?.[y] || { s: "none", v: "—" };
-      const meta = statusMeta[cell.s] || statusMeta.none;
-      html += `<td style="padding:6px 8px;text-align:center">
-        <span class="cell-chip ${meta.cls}" style="padding:2px 7px;font-size:10px;cursor:default" title="${cell.v}">${meta.label}</span>
-      </td>`;
+    dims.forEach((dim, di) => {
+      html += `<tr style="${di % 2 === 0 ? 'background:var(--card-raised)' : ''}">
+        <td style="padding:7px 10px;font-size:11px;font-weight:600;color:var(--txt-secondary);
+                   white-space:nowrap;border-bottom:1px solid var(--border)">${dim.label}</td>`;
+
+      cols.forEach((col, ci) => {
+        const cell = dim.rows[farm]?.[col.id] || { s:"none", v:"—" };
+        const m    = sMeta[cell.s] || sMeta.none;
+        const borderLeft = (col.group === 'ano' && ci === 0) || (col.group === 'mes' && ci === anosCols.length)
+          ? 'border-left:2px solid var(--border);' : '';
+        const content = cell.s === 'na'
+          ? `<span style="color:var(--txt-muted);opacity:0.3;font-size:10px">·</span>`
+          : `<span class="cell-chip ${m.cls}" style="padding:2px 8px;font-size:10px;cursor:default;white-space:nowrap"
+               title="${cell.v.replace(/"/g,"'")}">${m.sym ? m.sym+' ' : ''}${m.label}</span>`;
+        html += `<td style="padding:5px 6px;text-align:center;border-bottom:1px solid var(--border);${borderLeft}">${content}</td>`;
+      });
+
+      html += `</tr>`;
     });
-    html += `</tr>`;
+
+    html += `</tbody></table></div></div>`;
   });
 
-  html += `</tbody></table></div>`;
   document.getElementById('periods-content').innerHTML = html;
 }
 
