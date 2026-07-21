@@ -181,22 +181,23 @@ tbody td:first-child{color:var(--txt-primary);font-family:var(--font-ui);font-si
 .cov-farm-table tr:hover td{background:var(--card-raised);}
 .legend-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--txt-muted);}
 /* ── period heatmap ── */
-.ph-farm-block{margin-bottom:32px;}
-.ph-farm-title{font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--pass);padding-bottom:6px;border-bottom:2px solid var(--pass);margin-bottom:14px;}
-.ph-dim-section{margin-bottom:18px;}
-.ph-dim-label{font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--txt-secondary);margin-bottom:8px;}
-.ph-grid{display:grid;gap:3px;}
-.ph-year-row{display:contents;}
-.ph-year-label{font-size:10px;font-weight:600;color:var(--txt-muted);letter-spacing:0.05em;display:flex;align-items:center;padding-right:6px;white-space:nowrap;}
-.ph-cell{width:28px;height:22px;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;letter-spacing:0.03em;cursor:default;transition:opacity 0.1s;}
-.ph-cell:hover{opacity:0.8;}
-.ph-ok{background:color-mix(in srgb,var(--pass) 22%,transparent);color:var(--pass);}
-.ph-none{background:var(--card-raised);color:var(--txt-muted);}
-.ph-future{background:transparent;color:transparent;border:1px dashed var(--border);}
-.ph-timeout{background:color-mix(in srgb,var(--fail) 18%,transparent);color:var(--fail);}
-.ph-erro{background:color-mix(in srgb,var(--fail) 18%,transparent);color:var(--fail);}
-.ph-month-header{font-size:8px;font-weight:600;letter-spacing:0.05em;text-transform:uppercase;color:var(--txt-muted);display:flex;align-items:flex-end;justify-content:center;height:18px;width:28px;}
-.ph-pending{display:flex;align-items:center;gap:10px;padding:20px 16px;background:var(--card-raised);border-radius:var(--r);color:var(--txt-muted);font-size:12px;}
+.ph-farm-block{margin-bottom:28px;}
+.ph-farm-title{font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--txt-secondary);margin-bottom:12px;}
+.ph-dim-section{margin-bottom:14px;}
+.ph-dim-label{font-size:10px;color:var(--txt-muted);margin-bottom:6px;}
+.ph-row{display:flex;align-items:center;gap:4px;margin-bottom:3px;}
+.ph-year{font-size:10px;font-weight:600;color:var(--txt-muted);width:32px;flex-shrink:0;font-variant-numeric:tabular-nums;}
+.ph-sq{width:18px;height:18px;border-radius:3px;cursor:default;flex-shrink:0;}
+.ph-sq:hover{opacity:0.75;}
+.ph-ok{background:color-mix(in srgb,var(--pass) 30%,transparent);}
+.ph-partial{background:color-mix(in srgb,var(--warn) 35%,transparent);}
+.ph-none{background:var(--card-raised);}
+.ph-future{background:transparent;border:1px dashed var(--border);}
+.ph-timeout{background:color-mix(in srgb,var(--fail) 25%,transparent);}
+.ph-header-row{display:flex;align-items:center;gap:4px;margin-bottom:4px;}
+.ph-header-spacer{width:32px;flex-shrink:0;}
+.ph-mth{width:18px;flex-shrink:0;font-size:8px;text-align:center;color:var(--txt-muted);font-variant-numeric:tabular-nums;}
+.ph-pending{display:flex;align-items:center;gap:10px;padding:16px;background:var(--card-raised);border-radius:var(--r);color:var(--txt-muted);font-size:12px;}
 /* ── bugs ── */
 .bugs-list{display:flex;flex-direction:column;gap:2px;}
 .bug-row{background:var(--card);border:1px solid var(--border);border-radius:var(--r);display:grid;grid-template-columns:6px 80px 1fr;overflow:hidden;}
@@ -797,7 +798,7 @@ const PERIODS_DATA = {
 function renderPeriods() {
   const { farms, lastRun, monthly } = PERIODS_DATA;
 
-  const MESES = ["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"];
+  const MESES    = ["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"];
   const DIM_LABELS = {
     produtividade: "Colheita / Produtividade",
     custo:         "Custo operacional",
@@ -805,39 +806,50 @@ function renderPeriods() {
     maquinas:      "Máquinas em operação",
   };
 
-  // Se ainda não temos dados mensais, mostra aviso e renderiza a visão anual resumida
-  if (!monthly) {
-    let html = `<div class="ph-pending">
-      <span style="font-size:20px">⏳</span>
-      <div>
-        <div style="font-weight:600;color:var(--txt-secondary);margin-bottom:2px">Mapeamento mensal em andamento</div>
-        <div>Execute <code style="font-size:11px;background:var(--card-raised);padding:1px 5px;border-radius:3px">python3 run_cobertura_mensal.py</code>
-          e atualize o dashboard com o JSON gerado. Última rodada anual: ${lastRun}</div>
-      </div>
+  const sqCls = { ok:"ph-ok", partial:"ph-partial", none:"ph-none",
+                  timeout:"ph-timeout", erro:"ph-timeout", future:"ph-future", na:"ph-future" };
+
+  const legend = `
+    <div class="legend-row" style="margin-bottom:20px">
+      <div class="legend-item"><div class="ph-sq ph-ok"></div> Tem dado</div>
+      <div class="legend-item"><div class="ph-sq ph-partial"></div> Parcial</div>
+      <div class="legend-item"><div class="ph-sq ph-none"></div> Sem dado</div>
+      <div class="legend-item"><div class="ph-sq ph-future"></div> Futuro / N/A</div>
     </div>`;
 
-    // Tabela de resumo anual enquanto mensal não está disponível
-    const { dims } = PERIODS_DATA;
-    const allCols = PERIODS_DATA.cols || [];
-    const sMeta = { ok:{l:"✓",cls:"ph-ok"}, partial:{l:"~",cls:"ph-ok"}, none:{l:"—",cls:"ph-none"},
-                    timeout:{l:"⏱",cls:"ph-timeout"}, na:{l:"",cls:"ph-future"} };
+  // Cabeçalho de meses (reutilizado em cada dimensão)
+  const mthHeader = `
+    <div class="ph-header-row">
+      <div class="ph-header-spacer"></div>
+      ${MESES.map(m => `<div class="ph-mth">${m}</div>`).join('')}
+    </div>`;
 
-    html += `<div style="margin-top:24px;font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--txt-muted);margin-bottom:12px">Visão anual (enquanto mensal não está disponível)</div>`;
+  // ── Sem dados mensais: fallback com quadradinhos por ano (12 cinzas por padrão) ──
+  if (!monthly) {
+    const { dims, cols } = PERIODS_DATA;
+    const anoCols = (cols || []).filter(c => c.group === 'ano');
+    const sMap = { ok:"ph-ok", partial:"ph-partial", none:"ph-none", timeout:"ph-timeout", na:"ph-future" };
+
+    let html = `<div style="font-size:11px;color:var(--txt-muted);margin-bottom:16px">
+      Granularidade mensal pendente — execute <code style="background:var(--card-raised);padding:1px 5px;border-radius:3px;font-size:10px">python3 run_cobertura_mensal.py</code>.
+      Exibindo cobertura anual. Última rodada: ${lastRun}
+    </div>${legend}`;
 
     farms.forEach(farm => {
       html += `<div class="ph-farm-block"><div class="ph-farm-title">${farm}</div>`;
       dims.forEach(dim => {
-        html += `<div class="ph-dim-section"><div class="ph-dim-label">${dim.label}</div>
-          <div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap">`;
-        allCols.filter(c => c.group === 'ano').forEach(col => {
-          const cell = dim.rows[farm]?.[col.id] || {s:"none",v:"—"};
-          const m = sMeta[cell.s] || sMeta.none;
-          html += `<div style="display:flex;flex-direction:column;align-items:center;gap:2px">
-            <span style="font-size:9px;color:var(--txt-muted)">${col.label}</span>
-            <div class="ph-cell ${m.cls}" style="width:36px" title="${(cell.v||'').replace(/"/g,"'")}">${m.l}</div>
+        html += `<div class="ph-dim-section"><div class="ph-dim-label">${dim.label}</div>`;
+        anoCols.forEach(col => {
+          const cell = dim.rows[farm]?.[col.id] || { s:"none", v:"—" };
+          const cls  = sMap[cell.s] || "ph-none";
+          const tip  = (cell.v || "").replace(/"/g,"'");
+          // Mostra ano + 12 quadradinhos (todos com o status do ano)
+          html += `<div class="ph-row">
+            <span class="ph-year">${col.label}</span>
+            ${MESES.map(m => `<div class="ph-sq ${cls}" title="${m}/${col.label}: ${tip}"></div>`).join('')}
           </div>`;
         });
-        html += `</div></div>`;
+        html += `</div>`;
       });
       html += `</div>`;
     });
@@ -846,17 +858,14 @@ function renderPeriods() {
     return;
   }
 
-  // ── Heatmap mês a mês ──────────────────────────────────────────────────────
-  const anos = Object.keys(monthly[farms[0]]?.[Object.keys(DIM_LABELS)[0]] || {}).sort();
+  // ── Heatmap mês a mês real ──────────────────────────────────────────────────
+  const anos = [...new Set(
+    Object.values(monthly).flatMap(f => Object.values(f).flatMap(d => Object.keys(d)))
+  )].sort();
 
-  let html = `
-    <div style="font-size:11px;color:var(--txt-muted);margin-bottom:8px">Rodada em ${lastRun} · passe o mouse em cada célula para ver o detalhe</div>
-    <div class="legend-row" style="margin-bottom:20px">
-      <div class="legend-item"><div class="ph-cell ph-ok" style="width:22px;height:16px"></div> Tem dado</div>
-      <div class="legend-item"><div class="ph-cell ph-none" style="width:22px;height:16px"></div> Sem dado</div>
-      <div class="legend-item"><div class="ph-cell ph-timeout" style="width:22px;height:16px"></div> Timeout</div>
-      <div class="legend-item"><div class="ph-cell ph-future" style="width:22px;height:16px"></div> Futuro</div>
-    </div>`;
+  let html = `<div style="font-size:11px;color:var(--txt-muted);margin-bottom:16px">
+    Rodada em ${lastRun} · passe o mouse para ver o detalhe
+  </div>${legend}`;
 
   farms.forEach(farm => {
     const farmData = monthly[farm] || {};
@@ -864,30 +873,19 @@ function renderPeriods() {
 
     Object.entries(DIM_LABELS).forEach(([dimId, dimLabel]) => {
       const dimData = farmData[dimId] || {};
-      html += `<div class="ph-dim-section"><div class="ph-dim-label">${dimLabel}</div>`;
+      html += `<div class="ph-dim-section"><div class="ph-dim-label">${dimLabel}</div>${mthHeader}`;
 
-      // Grid: linhas = anos, colunas = meses
-      html += `<div style="display:grid;grid-template-columns:36px repeat(12,28px);gap:3px;align-items:center">`;
-
-      // Cabeçalho meses
-      html += `<div></div>`;
-      MESES.forEach(m => {
-        html += `<div class="ph-month-header">${m}</div>`;
-      });
-
-      // Linhas por ano
       anos.forEach(ano => {
-        html += `<div class="ph-year-label">${ano}</div>`;
+        html += `<div class="ph-row"><span class="ph-year">${ano}</span>`;
         MESES.forEach(mes => {
           const cell = dimData[ano]?.[mes] || { s:"none", v:"—" };
-          const cls  = { ok:"ph-ok", none:"ph-none", timeout:"ph-timeout", erro:"ph-erro", future:"ph-future" }[cell.s] || "ph-none";
-          const sym  = { ok:"✓", none:"", timeout:"⏱", erro:"!", future:"" }[cell.s] || "";
-          const tip  = (cell.v || "").replace(/"/g, "'").slice(0, 120);
-          html += `<div class="ph-cell ${cls}" title="${mes}/${ano}: ${tip}">${sym}</div>`;
+          const cls  = sqCls[cell.s] || "ph-none";
+          const tip  = `${mes}/${ano}: ${(cell.v || "sem dado").slice(0, 100).replace(/"/g,"'")}`;
+          html += `<div class="ph-sq ${cls}" title="${tip}"></div>`;
         });
+        html += `</div>`;
       });
-
-      html += `</div></div>`;
+      html += `</div>`;
     });
 
     html += `</div>`;
